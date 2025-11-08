@@ -24,7 +24,7 @@ const ChatToggleButton = () => {
         rounded-r-lg shadow-elegant px-3 py-6 
         border-r-2 border-t-2 border-b-2 border-gold-dark/30
         transition-all duration-500 ease-in-out
-        ${open ? 'top-[20%] -translate-y-1/2' : 'top-1/2 -translate-y-1/2'}
+        ${open ? 'top-4' : 'top-1/2 -translate-y-1/2'}
       `}
     >
       <MessageSquare className="h-5 w-5 text-black" />
