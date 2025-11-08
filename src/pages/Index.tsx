@@ -26,7 +26,7 @@ const ChatSidebar = ({
   const { open } = useSidebar();
   
   return (
-    <Sidebar side="left" className="w-[450px] border-r border-gold-dark/20">
+    <Sidebar side="left" className="border-r border-gold-dark/20">
       <SidebarContent className="h-full">
         <ChatInterface
           onDrop={onDrop}
@@ -75,16 +75,16 @@ const Index = () => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="h-screen flex w-full bg-background overflow-hidden">
+      <div className="min-h-screen flex w-full bg-background">
         <ChatSidebar
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           droppedNews={droppedNews}
         />
         
-        <main className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 flex flex-col">
           {/* Header con barra de búsqueda */}
-          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm flex-shrink-0">
+          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
             <div className="flex items-center gap-4 p-4">
               <NewsSearchBar 
                 value={searchQuery} 
