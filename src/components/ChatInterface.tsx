@@ -43,6 +43,14 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
     loadChats();
   }, []);
 
+  // Procesar noticias arrastradas
+  useEffect(() => {
+    if (droppedNews.length > 0 && activeChat) {
+      const latestNews = droppedNews[droppedNews.length - 1];
+      handleNewsMessage(latestNews);
+    }
+  }, [droppedNews, activeChat]);
+
   const loadChats = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -107,10 +115,10 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       
       const { data: newChatData, error: chatError } = await supabase
         .from('chats')
-        .insert({
+        .insert([{
           user_id: user.id,
           name: newChatName
-        })
+        }])
         .select()
         .single();
 
@@ -119,11 +127,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       // Crear mensaje de bienvenida
       const { data: welcomeMessage, error: messageError } = await supabase
         .from('messages')
-        .insert({
+        .insert([{
           chat_id: newChatData.id,
           type: 'ai',
           content: '¡Hola! Soy tu asistente de análisis de mercado. ¿En qué puedo ayudarte?'
-        })
+        }])
         .select()
         .single();
 
@@ -197,6 +205,79 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
     }
   };
 
+  const handleNewsMessage = async (news: NewsItem) => {
+    if (!activeChat) return;
+
+    try {
+      const newsContent = `📰 ${news.title}\n\n🏷️ Categoría: ${news.category}\n📅 ${news.time}\n📍 Fuente: ${news.source}${news.url ? `\n🔗 ${news.url}` : ''}`;
+
+      const { data: newsMessageData, error: newsError } = await supabase
+        .from('messages')
+        .insert([{
+          chat_id: activeChat,
+          type: 'user',
+          content: newsContent,
+          news_data: news as any
+        }])
+        .select()
+        .single();
+
+      if (newsError) throw newsError;
+
+      const newsMessage: Message = {
+        id: newsMessageData.id,
+        type: "user",
+        content: newsContent,
+        news: news
+      };
+
+      setChats(chats => chats.map(chat => 
+        chat.id === activeChat 
+          ? { ...chat, messages: [...chat.messages, newsMessage] }
+          : chat
+      ));
+
+      // Simular respuesta de AI
+      setTimeout(async () => {
+        const aiContent = `He recibido la noticia: "${news.title}". ¿Qué te gustaría saber sobre esta información?`;
+        
+        const { data: aiMessageData, error: aiError } = await supabase
+          .from('messages')
+          .insert([{
+            chat_id: activeChat,
+            type: 'ai',
+            content: aiContent
+          }])
+          .select()
+          .single();
+
+        if (aiError) {
+          console.error('Error saving AI message:', aiError);
+          return;
+        }
+
+        const aiMessage: Message = {
+          id: aiMessageData.id,
+          type: "ai",
+          content: aiContent,
+        };
+        
+        setChats(chats => chats.map(chat => 
+          chat.id === activeChat 
+            ? { ...chat, messages: [...chat.messages, aiMessage] }
+            : chat
+        ));
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending news message:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar la noticia",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || !activeChat) return;
     
@@ -204,11 +285,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       // Guardar mensaje del usuario
       const { data: userMessageData, error: userError } = await supabase
         .from('messages')
-        .insert({
+        .insert([{
           chat_id: activeChat,
           type: 'user',
           content: input
-        })
+        }])
         .select()
         .single();
 
@@ -233,11 +314,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
         
         const { data: aiMessageData, error: aiError } = await supabase
           .from('messages')
-          .insert({
+          .insert([{
             chat_id: activeChat,
             type: 'ai',
             content: aiContent
-          })
+          }])
           .select()
           .single();
 
@@ -393,15 +474,6 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
                       <p className="text-xs font-medium">{message.news.title}</p>
                     </div>
                   )}
-                </div>
-              </div>
-            ))}
-            
-            {droppedNews.map((news) => (
-              <div key={news.id} className="flex justify-start">
-                <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gold-dark/10 border-2 border-gold-medium text-foreground">
-                  <p className="text-xs text-gold-light font-semibold mb-1">📰 Noticia añadida</p>
-                  <p className="text-sm">{news.title}</p>
                 </div>
               </div>
             ))}
