@@ -14,23 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const ChatToggleButton = () => {
-  const { open } = useSidebar();
-  
-  return (
-    <SidebarTrigger 
-      className={`
-        fixed left-0 z-20 bg-gradient-gold hover:opacity-90 
-        rounded-r-lg shadow-elegant px-3 py-6 
-        border-r-2 border-t-2 border-b-2 border-gold-dark/30
-        transition-all duration-500 ease-in-out
-        ${open ? 'top-4' : 'top-1/2 -translate-y-1/2'}
-      `}
-    >
-      <MessageSquare className="h-5 w-5 text-black" />
-    </SidebarTrigger>
-  );
-};
 
 const ChatSidebar = ({ 
   onDrop, 
@@ -42,15 +25,22 @@ const ChatSidebar = ({
   droppedNews: NewsItem[];
 }) => {
   return (
-    <Sidebar side="left" className="border-r border-gold-dark/20">
-      <SidebarContent className="h-full">
-        <ChatInterface
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          droppedNews={droppedNews}
-        />
-      </SidebarContent>
-    </Sidebar>
+    <div className="relative">
+      <Sidebar side="left" className="border-r border-gold-dark/20">
+        <SidebarContent className="h-full">
+          <ChatInterface
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            droppedNews={droppedNews}
+          />
+        </SidebarContent>
+      </Sidebar>
+      
+      {/* Lengueta dorada que se mueve con el sidebar */}
+      <SidebarTrigger className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30 z-20">
+        <MessageSquare className="h-5 w-5 text-black" />
+      </SidebarTrigger>
+    </div>
   );
 };
 
@@ -104,9 +94,6 @@ const Index = () => {
             </div>
           </header>
           
-          {/* Lengueta dorada para abrir el chat */}
-          <ChatToggleButton />
-
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
             <NewsPanel 
