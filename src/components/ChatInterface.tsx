@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { NewsItem } from "./NewsCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -27,83 +29,255 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterfaceProps) => {
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: "1",
-      name: "Conversación 1",
-      createdAt: new Date(),
-      messages: [
-        {
-          id: "1",
-          type: "ai",
-          content: "¡Hola! Soy tu asistente de análisis de mercado. Arrastra noticias aquí para que las analice.",
-        },
-      ],
-    },
-  ]);
-  const [activeChat, setActiveChat] = useState<string>("1");
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [showChatList, setShowChatList] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const currentMessages = chats.find((chat) => chat.id === activeChat)?.messages || [];
 
-  const createNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      name: `Conversación ${chats.length + 1}`,
-      createdAt: new Date(),
-      messages: [
-        {
-          id: Date.now().toString(),
-          type: "ai",
-          content: "¡Hola! Soy tu asistente de análisis de mercado. ¿En qué puedo ayudarte?",
-        },
-      ],
-    };
-    setChats([...chats, newChat]);
-    setActiveChat(newChat.id);
-    setShowChatList(false);
-  };
+  // Cargar chats desde la base de datos
+  useEffect(() => {
+    loadChats();
+  }, []);
 
-  const deleteChat = (chatId: string) => {
-    if (chats.length === 1) return; // No borrar el último chat
-    const updatedChats = chats.filter((chat) => chat.id !== chatId);
-    setChats(updatedChats);
-    if (activeChat === chatId) {
-      setActiveChat(updatedChats[0].id);
+  const loadChats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: chatsData, error: chatsError } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (chatsError) throw chatsError;
+
+      if (chatsData && chatsData.length > 0) {
+        // Cargar mensajes para cada chat
+        const chatsWithMessages = await Promise.all(
+          chatsData.map(async (chat) => {
+            const { data: messagesData } = await supabase
+              .from('messages')
+              .select('*')
+              .eq('chat_id', chat.id)
+              .order('created_at', { ascending: true });
+
+            return {
+              id: chat.id,
+              name: chat.name,
+              createdAt: new Date(chat.created_at),
+              messages: messagesData?.map(msg => ({
+                id: msg.id,
+                type: msg.type as "user" | "ai" | "news",
+                content: msg.content,
+                news: msg.news_data ? msg.news_data as unknown as NewsItem : undefined
+              })) || []
+            };
+          })
+        );
+
+        setChats(chatsWithMessages);
+        setActiveChat(chatsWithMessages[0].id);
+      } else {
+        // Crear primer chat si no existe ninguno
+        await createNewChat();
+      }
+    } catch (error) {
+      console.error('Error loading chats:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las conversaciones",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: "user",
-      content: input,
-    };
-    
-    setChats(chats.map(chat => 
-      chat.id === activeChat 
-        ? { ...chat, messages: [...chat.messages, userMessage] }
-        : chat
-    ));
-    setInput("");
-    
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: "Entendido. ¿Qué aspecto de esta información te gustaría que analice?",
+  const createNewChat = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newChatName = `Conversación ${chats.length + 1}`;
+      
+      const { data: newChatData, error: chatError } = await supabase
+        .from('chats')
+        .insert({
+          user_id: user.id,
+          name: newChatName
+        })
+        .select()
+        .single();
+
+      if (chatError) throw chatError;
+
+      // Crear mensaje de bienvenida
+      const { data: welcomeMessage, error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: newChatData.id,
+          type: 'ai',
+          content: '¡Hola! Soy tu asistente de análisis de mercado. ¿En qué puedo ayudarte?'
+        })
+        .select()
+        .single();
+
+      if (messageError) throw messageError;
+
+      const newChat: Chat = {
+        id: newChatData.id,
+        name: newChatData.name,
+        createdAt: new Date(newChatData.created_at),
+        messages: [{
+          id: welcomeMessage.id,
+          type: 'ai',
+          content: welcomeMessage.content
+        }]
       };
-      setChats(chats => chats.map(chat => 
+
+      setChats([newChat, ...chats]);
+      setActiveChat(newChat.id);
+      setShowChatList(false);
+
+      toast({
+        title: "Nueva conversación",
+        description: "Se creó una nueva conversación"
+      });
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la conversación",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteChat = async (chatId: string) => {
+    if (chats.length === 1) {
+      toast({
+        title: "Información",
+        description: "Debes tener al menos una conversación",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chats')
+        .delete()
+        .eq('id', chatId);
+
+      if (error) throw error;
+
+      const updatedChats = chats.filter((chat) => chat.id !== chatId);
+      setChats(updatedChats);
+      
+      if (activeChat === chatId) {
+        setActiveChat(updatedChats[0].id);
+      }
+
+      toast({
+        title: "Conversación eliminada",
+        description: "La conversación se eliminó correctamente"
+      });
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la conversación",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || !activeChat) return;
+    
+    try {
+      // Guardar mensaje del usuario
+      const { data: userMessageData, error: userError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: activeChat,
+          type: 'user',
+          content: input
+        })
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      const userMessage: Message = {
+        id: userMessageData.id,
+        type: "user",
+        content: input,
+      };
+      
+      setChats(chats.map(chat => 
         chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, aiMessage] }
+          ? { ...chat, messages: [...chat.messages, userMessage] }
           : chat
       ));
-    }, 1000);
+      setInput("");
+      
+      // Simular respuesta de AI y guardarla
+      setTimeout(async () => {
+        const aiContent = "Entendido. ¿Qué aspecto de esta información te gustaría que analice?";
+        
+        const { data: aiMessageData, error: aiError } = await supabase
+          .from('messages')
+          .insert({
+            chat_id: activeChat,
+            type: 'ai',
+            content: aiContent
+          })
+          .select()
+          .single();
+
+        if (aiError) {
+          console.error('Error saving AI message:', aiError);
+          return;
+        }
+
+        const aiMessage: Message = {
+          id: aiMessageData.id,
+          type: "ai",
+          content: aiContent,
+        };
+        
+        setChats(chats => chats.map(chat => 
+          chat.id === activeChat 
+            ? { ...chat, messages: [...chat.messages, aiMessage] }
+            : chat
+        ));
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el mensaje",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <Sparkles className="h-8 w-8 text-gold-light animate-pulse mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Cargando conversaciones...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex">
