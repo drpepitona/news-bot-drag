@@ -13,11 +13,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
 
 const ChatSidebar = ({ 
   onDrop, 
@@ -31,7 +26,7 @@ const ChatSidebar = ({
   const { open } = useSidebar();
   
   return (
-    <Sidebar side="left" className="border-r border-gold-dark/20 h-screen">
+    <Sidebar side="left" className="border-r border-gold-dark/20">
       <SidebarContent className="h-full">
         <ChatInterface
           onDrop={onDrop}
@@ -80,49 +75,38 @@ const Index = () => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <ResizablePanelGroup direction="horizontal" className="min-h-screen w-full bg-background">
-        <ResizablePanel 
-          defaultSize={25} 
-          minSize={15} 
-          maxSize={60}
-        >
-          <div className="h-screen flex">
-            <ChatSidebar
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              droppedNews={droppedNews}
-            />
-          </div>
-        </ResizablePanel>
+      <div className="min-h-screen flex w-full bg-background">
+        <ChatSidebar
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          droppedNews={droppedNews}
+        />
         
-        <ResizableHandle withHandle className="bg-gold-dark/20 hover:bg-gold-dark/40 transition-colors w-1" />
-        
-        <ResizablePanel defaultSize={75} minSize={40}>
-          <main className="flex flex-col h-screen">
-            {/* Header con barra de búsqueda */}
-            <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
-              <div className="flex items-center gap-4 p-4">
-                <NewsSearchBar 
-                  value={searchQuery} 
-                  onChange={setSearchQuery} 
-                />
-              </div>
-            </header>
-
-            {/* Panel de noticias - área principal */}
-            <div className="flex-1 overflow-hidden">
-              <NewsPanel 
-                onDragStart={handleDragStart}
-                searchQuery={searchQuery}
-                region={region}
-                category={category}
-                onRegionChange={setRegion}
-                onCategoryChange={setCategory}
+        <main className="flex-1 flex flex-col">
+          {/* Header con barra de búsqueda */}
+          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
+            <div className="flex items-center gap-4 p-4">
+              <NewsSearchBar 
+                value={searchQuery} 
+                onChange={setSearchQuery} 
               />
             </div>
-          </main>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          </header>
+          
+
+          {/* Panel de noticias - área principal */}
+          <div className="flex-1 overflow-hidden">
+            <NewsPanel 
+              onDragStart={handleDragStart}
+              searchQuery={searchQuery}
+              region={region}
+              category={category}
+              onRegionChange={setRegion}
+              onCategoryChange={setCategory}
+            />
+          </div>
+        </main>
+      </div>
     </SidebarProvider>
   );
 };
