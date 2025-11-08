@@ -23,38 +23,16 @@ const ChatSidebar = ({
   onDragOver: (e: React.DragEvent) => void;
   droppedNews: NewsItem[];
 }) => {
-  const { open, toggleSidebar } = useSidebar();
-  
   return (
-    <div className="relative">
-      <Sidebar side="left" className="border-r border-gold-dark/20">
-        <SidebarContent className="h-full">
-          <ChatInterface
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            droppedNews={droppedNews}
-          />
-        </SidebarContent>
-      </Sidebar>
-      
-      {/* Lengueta que está pegada al chat */}
-      <Button
-        onClick={toggleSidebar}
-        className={`
-          absolute top-1/2 -translate-y-1/2 z-20 
-          bg-gradient-gold hover:opacity-90 
-          transition-all duration-300 ease-in-out
-          border-r-2 border-t-2 border-b-2 border-gold-dark/30
-          shadow-elegant
-          ${open 
-            ? 'right-0 translate-x-full rounded-r-lg px-2 py-4' 
-            : 'right-0 translate-x-full rounded-r-lg px-3 py-6'
-          }
-        `}
-      >
-        <MessageSquare className="h-5 w-5 text-black" />
-      </Button>
-    </div>
+    <Sidebar side="left" className="border-r border-gold-dark/20">
+      <SidebarContent className="h-full">
+        <ChatInterface
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          droppedNews={droppedNews}
+        />
+      </SidebarContent>
+    </Sidebar>
   );
 };
 
@@ -98,7 +76,6 @@ const Index = () => {
         />
         
         <main className="flex-1 flex flex-col">
-          
           {/* Header con barra de búsqueda */}
           <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
             <div className="flex items-center gap-4 p-4">
@@ -109,6 +86,10 @@ const Index = () => {
             </div>
           </header>
           
+          {/* Lengueta dorada para abrir el chat */}
+          <SidebarTrigger className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30">
+            <MessageSquare className="h-5 w-5 text-black" />
+          </SidebarTrigger>
 
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
