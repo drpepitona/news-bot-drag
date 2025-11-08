@@ -314,7 +314,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
 
       // Si es el primer mensaje del usuario, actualizar el nombre del chat
       if (isFirstUserMessage) {
-        const chatName = input.length > 40 ? `${input.substring(0, 40)}...` : input;
+        const chatName = input.length > 27 ? `${input.substring(0, 27)}...` : input;
         
         const { error: updateError } = await supabase
           .from('chats')
