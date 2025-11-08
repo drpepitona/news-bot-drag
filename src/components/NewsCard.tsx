@@ -9,6 +9,8 @@ export interface NewsItem {
   sentiment: "positive" | "negative" | "neutral";
   time: string;
   source: string;
+  imageUrl?: string;
+  region: string;
 }
 
 interface NewsCardProps {
@@ -21,10 +23,22 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, news)}
-      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group"
+      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
+      <div className="flex items-start gap-3">
+        {news.imageUrl && (
+          <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gold-dark/30">
+            <img 
+              src={news.imageUrl} 
+              alt={news.title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary" className="text-xs bg-black-elevated border-gold-dark/30 text-gold-light">
               {news.category}
