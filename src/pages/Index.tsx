@@ -29,9 +29,13 @@ const Index = () => {
       setTimeout(() => {
         setIsChatVisible(false);
         setIsAnimating(false);
-      }, 300); // Duración de la animación
+      }, 300);
     } else {
       setIsChatVisible(true);
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
     }
   };
 
