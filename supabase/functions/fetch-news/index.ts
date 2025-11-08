@@ -23,8 +23,8 @@ serve(async (req) => {
   }
 
   try {
-    const { region, from, to } = await req.json();
-    console.log('Fetching news for region:', region, 'from:', from, 'to:', to);
+    const { region } = await req.json();
+    console.log('Fetching news for region:', region);
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     
@@ -43,17 +43,14 @@ serve(async (req) => {
 
     const country = countryMap[region] || '';
 
-    // Build the NewsData.io URL with parameters
+    // Build the NewsData.io URL with parameters (free tier doesn't support date filters)
     const params = new URLSearchParams({
       apikey: NEWS_API_KEY,
       language: 'en,es',
       category: 'business',
-      size: '10',
     });
 
     if (country) params.append('country', country);
-    if (from) params.append('from_date', from);
-    if (to) params.append('to_date', to);
 
     // Fetch news from NewsData.io
     const response = await fetch(
