@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { NewsCard, NewsItem } from "./NewsCard";
-import { Newspaper, RefreshCw, Globe2 } from "lucide-react";
+import { Newspaper, RefreshCw, Globe2, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -19,8 +19,10 @@ interface NewsPanelProps {
 
 export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [region, setRegion] = useState<string>("all");
+  const [category, setCategory] = useState<string>("all");
   const { toast } = useToast();
 
   const fetchNews = async (selectedRegion: string) => {
@@ -40,6 +42,7 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
       }));
 
       setNews(articles);
+      setFilteredNews(articles);
       
       toast({
         title: "Noticias actualizadas",
@@ -57,6 +60,15 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (category === "all") {
+      setFilteredNews(news);
+    } else {
+      setFilteredNews(news.filter(item => item.category === category));
+    }
+  }, [category, news]);
+
 
   useEffect(() => {
     fetchNews(region);
@@ -116,21 +128,41 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="flex-1 bg-black-elevated border-border">
+              <SelectValue placeholder="Filtrar por categoría" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="all">📊 Todas las categorías</SelectItem>
+              <SelectItem value="Acciones">📈 Acciones</SelectItem>
+              <SelectItem value="Forex">💱 Forex</SelectItem>
+              <SelectItem value="Materias Primas">🥇 Materias Primas</SelectItem>
+              <SelectItem value="Energía">⚡ Energía</SelectItem>
+              <SelectItem value="Bonos">📄 Bonos</SelectItem>
+              <SelectItem value="Mercados">💼 Mercados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <ScrollArea className="flex-1 p-6">
-        {loading && news.length === 0 ? (
+        {loading && filteredNews.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <RefreshCw className="h-8 w-8 text-gold-light animate-spin" />
           </div>
-        ) : news.length === 0 ? (
+        ) : filteredNews.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <p className="text-muted-foreground text-sm">No hay noticias disponibles</p>
-            <p className="text-muted-foreground text-xs mt-2">Intenta cambiar la región o el rango de fechas</p>
+            <p className="text-muted-foreground text-xs mt-2">
+              {category !== "all" ? "Intenta cambiar el filtro de categoría" : "Intenta cambiar la región"}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {news.map((item) => (
+            {filteredNews.map((item) => (
               <NewsCard key={item.id} news={item} onDragStart={onDragStart} />
             ))}
           </div>
