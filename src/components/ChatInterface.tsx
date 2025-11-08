@@ -283,14 +283,20 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
   const handleSend = async () => {
     if (!input.trim() || !activeChat) return;
     
+    const userInput = input;
+    
     try {
+      // Verificar si es el primer mensaje del usuario en este chat
+      const currentChat = chats.find(chat => chat.id === activeChat);
+      const isFirstUserMessage = currentChat?.messages.filter(m => m.type === 'user').length === 0;
+      
       // Guardar mensaje del usuario
       const { data: userMessageData, error: userError } = await supabase
         .from('messages')
         .insert([{
           chat_id: activeChat,
           type: 'user',
-          content: input
+          content: userInput
         }])
         .select()
         .single();
@@ -300,14 +306,37 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       const userMessage: Message = {
         id: userMessageData.id,
         type: "user",
-        content: input,
+        content: userInput,
       };
       
-      setChats(chats.map(chat => 
-        chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, userMessage] }
-          : chat
-      ));
+      // Si es el primer mensaje del usuario, actualizar el nombre del chat
+      if (isFirstUserMessage) {
+        const chatName = userInput.length > 40 
+          ? userInput.substring(0, 40) + '...' 
+          : userInput;
+        
+        const { error: updateError } = await supabase
+          .from('chats')
+          .update({ name: chatName })
+          .eq('id', activeChat);
+
+        if (updateError) {
+          console.error('Error updating chat name:', updateError);
+        }
+
+        setChats(chats.map(chat => 
+          chat.id === activeChat 
+            ? { ...chat, name: chatName, messages: [...chat.messages, userMessage] }
+            : chat
+        ));
+      } else {
+        setChats(chats.map(chat => 
+          chat.id === activeChat 
+            ? { ...chat, messages: [...chat.messages, userMessage] }
+            : chat
+        ));
+      }
+      
       setInput("");
       
       // Simular respuesta de AI y guardarla
