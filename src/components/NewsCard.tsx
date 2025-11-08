@@ -10,6 +10,7 @@ export interface NewsItem {
   time: string;
   source: string;
   imageUrl?: string;
+  url?: string;
   region: string;
 }
 
@@ -19,11 +20,19 @@ interface NewsCardProps {
 }
 
 export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Only open link if not dragging
+    if (news.url && e.button === 0) {
+      window.open(news.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, news)}
-      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
+      onClick={handleClick}
+      className="p-4 cursor-pointer active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
     >
       <div className="flex items-start gap-3">
         {news.imageUrl && (
@@ -50,7 +59,7 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
               <TrendingDown className="h-4 w-4 text-red-400" />
             )}
           </div>
-          <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2">
+          <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 group-hover:text-gold-light transition-colors">
             {news.title}
           </h3>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

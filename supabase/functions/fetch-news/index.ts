@@ -13,6 +13,7 @@ interface NewsArticle {
   time: string;
   source: string;
   imageUrl?: string;
+  url?: string;
   region: string;
 }
 
@@ -76,6 +77,7 @@ serve(async (req) => {
       time: formatTimeAgo(article.publishedAt),
       source: article.source.name,
       imageUrl: article.urlToImage,
+      url: article.url,
       region: region
     }));
 
@@ -143,6 +145,7 @@ function getMockNews(region: string): NewsArticle[] {
       time: "Hace 15 min",
       source: "Bloomberg",
       imageUrl: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400",
+      url: "https://www.bloomberg.com",
       region: "all"
     },
     {
@@ -152,6 +155,7 @@ function getMockNews(region: string): NewsArticle[] {
       time: "Hace 30 min",
       source: "CoinDesk",
       imageUrl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400",
+      url: "https://www.coindesk.com",
       region: "all"
     },
     {
@@ -161,6 +165,7 @@ function getMockNews(region: string): NewsArticle[] {
       time: "Hace 1 hora",
       source: "Financial Times",
       imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
+      url: "https://www.ft.com",
       region: "asia"
     },
     {
@@ -170,6 +175,7 @@ function getMockNews(region: string): NewsArticle[] {
       time: "Hace 2 horas",
       source: "Reuters",
       imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
+      url: "https://www.reuters.com",
       region: "europe"
     },
     {
@@ -179,6 +185,7 @@ function getMockNews(region: string): NewsArticle[] {
       time: "Hace 3 horas",
       source: "CNBC",
       imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
+      url: "https://www.cnbc.com",
       region: "us"
     }
   ];
