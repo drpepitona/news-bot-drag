@@ -36,8 +36,7 @@ const ChatSidebar = ({
   );
 };
 
-const MainContent = () => {
-  const { open } = useSidebar();
+const Index = () => {
   const [draggedNews, setDraggedNews] = useState<NewsItem | null>(null);
   const [droppedNews, setDroppedNews] = useState<NewsItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,56 +67,42 @@ const MainContent = () => {
   };
 
   return (
-    <>
-      <ChatSidebar
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        droppedNews={droppedNews}
-      />
-      
-      <main className="flex-1 flex flex-col">
-        {/* Header con barra de búsqueda */}
-        <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
-          <div className="flex items-center gap-4 p-4">
-            {/* Lengueta dorada que se mueve con el chat */}
-            <SidebarTrigger 
-              className={`bg-gradient-gold hover:opacity-90 shadow-elegant px-3 border-2 border-gold-dark/30 transition-all duration-500 ease-in-out ${
-                open 
-                  ? 'relative py-2 rounded-r-lg border-l-0' 
-                  : 'fixed left-0 top-1/2 -translate-y-1/2 z-20 py-6 rounded-r-lg border-l-0'
-              }`}
-            >
-              <MessageSquare className="h-5 w-5 text-black" />
-            </SidebarTrigger>
-            
-            <NewsSearchBar 
-              value={searchQuery} 
-              onChange={setSearchQuery} 
-            />
-          </div>
-        </header>
-
-        {/* Panel de noticias - área principal */}
-        <div className="flex-1 overflow-hidden">
-          <NewsPanel 
-            onDragStart={handleDragStart}
-            searchQuery={searchQuery}
-            region={region}
-            category={category}
-            onRegionChange={setRegion}
-            onCategoryChange={setCategory}
-          />
-        </div>
-      </main>
-    </>
-  );
-};
-
-const Index = () => {
-  return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-background">
-        <MainContent />
+        <ChatSidebar
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          droppedNews={droppedNews}
+        />
+        
+        <main className="flex-1 flex flex-col">
+          {/* Header con barra de búsqueda */}
+          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
+            <div className="flex items-center gap-4 p-4">
+              <NewsSearchBar 
+                value={searchQuery} 
+                onChange={setSearchQuery} 
+              />
+            </div>
+          </header>
+          
+          {/* Lengueta dorada para abrir el chat */}
+          <SidebarTrigger className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30">
+            <MessageSquare className="h-5 w-5 text-black" />
+          </SidebarTrigger>
+
+          {/* Panel de noticias - área principal */}
+          <div className="flex-1 overflow-hidden">
+            <NewsPanel 
+              onDragStart={handleDragStart}
+              searchQuery={searchQuery}
+              region={region}
+              category={category}
+              onRegionChange={setRegion}
+              onCategoryChange={setCategory}
+            />
+          </div>
+        </main>
       </div>
     </SidebarProvider>
   );
