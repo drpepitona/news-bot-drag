@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
   const [showChatList, setShowChatList] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const processedNewsCount = useRef(0);
 
   const currentMessages = chats.find((chat) => chat.id === activeChat)?.messages || [];
 
@@ -45,9 +46,10 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
 
   // Procesar noticias arrastradas
   useEffect(() => {
-    if (droppedNews.length > 0 && activeChat) {
+    if (droppedNews.length > processedNewsCount.current && activeChat) {
       const latestNews = droppedNews[droppedNews.length - 1];
       handleNewsMessage(latestNews);
+      processedNewsCount.current = droppedNews.length;
     }
   }, [droppedNews, activeChat]);
 
