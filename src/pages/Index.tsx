@@ -4,6 +4,8 @@ import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -17,6 +19,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [region, setRegion] = useState<string>("all");
   const [category, setCategory] = useState<string>("all");
+  const [isChatVisible, setIsChatVisible] = useState(true);
   const { toast } = useToast();
 
   const handleDragStart = (e: React.DragEvent, news: NewsItem) => {
@@ -45,25 +48,35 @@ const Index = () => {
     <div className="h-screen flex w-full bg-background">
       <ResizablePanelGroup direction="horizontal" className="w-full">
         {/* Panel del Chat - Redimensionable */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={60}>
-          <div className="h-full border-r border-gold-dark/20">
-            <ChatInterface
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              droppedNews={droppedNews}
-            />
-          </div>
-        </ResizablePanel>
+        {isChatVisible && (
+          <>
+            <ResizablePanel defaultSize={30} minSize={20} maxSize={60}>
+              <div className="h-full border-r border-gold-dark/20">
+                <ChatInterface
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  droppedNews={droppedNews}
+                />
+              </div>
+            </ResizablePanel>
 
-        {/* Handle para redimensionar */}
-        <ResizableHandle withHandle className="w-1 bg-gold-dark/20 hover:bg-gold-dark/40 transition-colors" />
+            {/* Handle para redimensionar */}
+            <ResizableHandle withHandle className="w-1 bg-gold-dark/20 hover:bg-gold-dark/40 transition-colors" />
+          </>
+        )}
 
         {/* Panel de Noticias */}
-        <ResizablePanel defaultSize={70} minSize={40}>
+        <ResizablePanel defaultSize={isChatVisible ? 70 : 100} minSize={40}>
           <main className="flex flex-col h-full">
             {/* Header con barra de búsqueda */}
             <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
               <div className="flex items-center gap-4 p-4">
+                <Button
+                  onClick={() => setIsChatVisible(!isChatVisible)}
+                  className="bg-gradient-gold hover:opacity-90 transition-opacity shadow-elegant text-black h-10 w-10 p-0 rounded-lg"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
                 <NewsSearchBar 
                   value={searchQuery} 
                   onChange={setSearchQuery} 
