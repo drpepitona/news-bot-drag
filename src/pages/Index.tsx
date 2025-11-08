@@ -14,29 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const ChatToggleButton = () => {
-  const { open, toggleSidebar } = useSidebar();
-  
-  return (
-    <Button
-      onClick={toggleSidebar}
-      className={`
-        fixed top-1/2 -translate-y-1/2 z-20 
-        bg-gradient-gold hover:opacity-90 
-        transition-all duration-300 ease-in-out
-        border-r-2 border-t-2 border-b-2 border-gold-dark/30
-        shadow-elegant
-        ${open 
-          ? 'left-80 rounded-r-lg px-2 py-4' 
-          : 'left-0 rounded-r-lg px-3 py-6'
-        }
-      `}
-    >
-      <MessageSquare className="h-5 w-5 text-black" />
-    </Button>
-  );
-};
-
 const ChatSidebar = ({ 
   onDrop, 
   onDragOver, 
@@ -46,16 +23,38 @@ const ChatSidebar = ({
   onDragOver: (e: React.DragEvent) => void;
   droppedNews: NewsItem[];
 }) => {
+  const { open, toggleSidebar } = useSidebar();
+  
   return (
-    <Sidebar side="left" className="border-r border-gold-dark/20">
-      <SidebarContent className="h-full">
-        <ChatInterface
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          droppedNews={droppedNews}
-        />
-      </SidebarContent>
-    </Sidebar>
+    <div className="relative">
+      <Sidebar side="left" className="border-r border-gold-dark/20">
+        <SidebarContent className="h-full">
+          <ChatInterface
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            droppedNews={droppedNews}
+          />
+        </SidebarContent>
+      </Sidebar>
+      
+      {/* Lengueta que está pegada al chat */}
+      <Button
+        onClick={toggleSidebar}
+        className={`
+          absolute top-1/2 -translate-y-1/2 z-20 
+          bg-gradient-gold hover:opacity-90 
+          transition-all duration-300 ease-in-out
+          border-r-2 border-t-2 border-b-2 border-gold-dark/30
+          shadow-elegant
+          ${open 
+            ? 'right-0 translate-x-full rounded-r-lg px-2 py-4' 
+            : 'right-0 translate-x-full rounded-r-lg px-3 py-6'
+          }
+        `}
+      >
+        <MessageSquare className="h-5 w-5 text-black" />
+      </Button>
+    </div>
   );
 };
 
@@ -99,8 +98,6 @@ const Index = () => {
         />
         
         <main className="flex-1 flex flex-col">
-          {/* Lengueta dorada que sigue al chat */}
-          <ChatToggleButton />
           
           {/* Header con barra de búsqueda */}
           <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
