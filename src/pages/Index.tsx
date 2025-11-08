@@ -4,7 +4,7 @@ import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
-import { MessagesSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -23,8 +23,6 @@ const ChatSidebar = ({
   onDragOver: (e: React.DragEvent) => void;
   droppedNews: NewsItem[];
 }) => {
-  const { open } = useSidebar();
-  
   return (
     <Sidebar side="left" className="border-r border-gold-dark/20">
       <SidebarContent className="h-full">
@@ -34,11 +32,6 @@ const ChatSidebar = ({
           droppedNews={droppedNews}
         />
       </SidebarContent>
-      <SidebarTrigger className={`fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 border-r-2 border-t-2 border-b-2 border-gold-dark/30 rounded-r-lg shadow-elegant transition-all duration-300 ease-in-out ${
-        open ? "px-2 py-4" : "px-3 py-6"
-      }`}>
-        <MessagesSquare className="h-5 w-5 text-black" />
-      </SidebarTrigger>
     </Sidebar>
   );
 };
@@ -93,6 +86,10 @@ const Index = () => {
             </div>
           </header>
           
+          {/* Lengueta dorada para abrir el chat */}
+          <SidebarTrigger className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30">
+            <MessageSquare className="h-5 w-5 text-black" />
+          </SidebarTrigger>
 
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
