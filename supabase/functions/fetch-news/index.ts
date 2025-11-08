@@ -27,12 +27,13 @@ serve(async (req) => {
     console.log('Fetching news for region:', region);
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
+    const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
     
-    if (!NEWS_API_KEY) {
-      throw new Error('NEWS_API_KEY not configured');
+    if (!NEWS_API_KEY || !THENEWSAPI_KEY) {
+      throw new Error('API keys not configured');
     }
 
-    // Map regions to NewsData.io country codes
+    // Map regions to country codes
     const countryMap: Record<string, string> = {
       'us': 'us',
       'china': 'cn',
@@ -43,57 +44,87 @@ serve(async (req) => {
 
     const country = countryMap[region] || '';
 
-    // Build the NewsData.io URL with parameters (free tier doesn't support date filters)
-    const params = new URLSearchParams({
-      apikey: NEWS_API_KEY,
-      language: 'en,es',
-      category: 'business',
-    });
+    // Fetch from both APIs in parallel
+    const [newsDataResponse, theNewsApiResponse] = await Promise.allSettled([
+      // NewsData.io
+      fetch(`https://newsdata.io/api/1/news?${new URLSearchParams({
+        apikey: NEWS_API_KEY,
+        language: 'en,es',
+        category: 'business',
+        ...(country && { country })
+      }).toString()}`),
+      
+      // TheNewsAPI.com
+      fetch(`https://api.thenewsapi.com/v1/news/all?${new URLSearchParams({
+        api_token: THENEWSAPI_KEY,
+        language: 'en,es',
+        categories: 'business,finance',
+        limit: '20',
+        ...(region !== 'all' && { search: region })
+      }).toString()}`)
+    ]);
 
-    if (country) params.append('country', country);
+    const allArticles: NewsArticle[] = [];
 
-    // Fetch news from NewsData.io
-    const response = await fetch(
-      `https://newsdata.io/api/1/news?${params.toString()}`
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`NewsData.io error: ${response.statusText}`, errorText);
-      throw new Error(`NewsData.io error: ${response.statusText}`);
+    // Process NewsData.io results
+    if (newsDataResponse.status === 'fulfilled' && newsDataResponse.value.ok) {
+      const data = await newsDataResponse.value.json();
+      if (data.results && data.results.length > 0) {
+        const filtered = data.results.filter((article: any) => {
+          const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+          const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+          return !cryptoKeywords.some(keyword => text.includes(keyword));
+        });
+        
+        allArticles.push(...filtered.map((article: any) => ({
+          title: article.title,
+          category: categorizeTopic(article.title, article.description),
+          sentiment: analyzeSentiment(article.title, article.description),
+          time: formatTimeAgo(article.pubDate),
+          source: article.source_id || 'NewsData.io',
+          imageUrl: article.image_url,
+          url: article.link,
+          region: region
+        })));
+      }
+    } else {
+      console.error('NewsData.io failed:', newsDataResponse.status === 'rejected' ? newsDataResponse.reason : 'Response not ok');
     }
 
-    const data = await response.json();
-    
-    if (!data.results || data.results.length === 0) {
-      console.log('No results from NewsData.io');
-      return new Response(
-        JSON.stringify({ articles: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Process TheNewsAPI results
+    if (theNewsApiResponse.status === 'fulfilled' && theNewsApiResponse.value.ok) {
+      const data = await theNewsApiResponse.value.json();
+      if (data.data && data.data.length > 0) {
+        const filtered = data.data.filter((article: any) => {
+          const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+          const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+          return !cryptoKeywords.some(keyword => text.includes(keyword));
+        });
+        
+        allArticles.push(...filtered.map((article: any) => ({
+          title: article.title,
+          category: categorizeTopic(article.title, article.description),
+          sentiment: analyzeSentiment(article.title, article.description),
+          time: formatTimeAgo(article.published_at),
+          source: article.source || 'TheNewsAPI',
+          imageUrl: article.image_url,
+          url: article.url,
+          region: region
+        })));
+      }
+    } else {
+      console.error('TheNewsAPI failed:', theNewsApiResponse.status === 'rejected' ? theNewsApiResponse.reason : 'Response not ok');
     }
-    
-    
-    // Filter out cryptocurrency news
-    const filteredArticles = data.results.filter((article: any) => {
-      const text = (article.title + ' ' + (article.description || '')).toLowerCase();
-      const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
-      return !cryptoKeywords.some(keyword => text.includes(keyword));
+
+    // Sort by most recent first
+    allArticles.sort((a, b) => {
+      const timeA = parseInt(a.time.match(/\d+/)?.[0] || '999');
+      const timeB = parseInt(b.time.match(/\d+/)?.[0] || '999');
+      return timeA - timeB;
     });
-    
-    const articles: NewsArticle[] = filteredArticles.map((article: any) => ({
-      title: article.title,
-      category: categorizeTopic(article.title, article.description),
-      sentiment: analyzeSentiment(article.title, article.description),
-      time: formatTimeAgo(article.pubDate),
-      source: article.source_id || 'Unknown',
-      imageUrl: article.image_url,
-      url: article.link,
-      region: region
-    }));
 
     return new Response(
-      JSON.stringify({ articles }),
+      JSON.stringify({ articles: allArticles }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
