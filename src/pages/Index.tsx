@@ -4,7 +4,7 @@ import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
-import { MessageCircle } from "lucide-react";
+import { MessagesSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -37,7 +37,7 @@ const ChatSidebar = ({
       <SidebarTrigger className={`fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 border-r-2 border-t-2 border-b-2 border-gold-dark/30 rounded-r-lg shadow-elegant transition-all duration-300 ease-in-out ${
         open ? "px-2 py-4" : "px-3 py-6"
       }`}>
-        <MessageCircle className="h-5 w-5 text-black" />
+        <MessagesSquare className="h-5 w-5 text-black" />
       </SidebarTrigger>
     </Sidebar>
   );
