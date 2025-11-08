@@ -26,7 +26,7 @@ const ChatSidebar = ({
   const { open } = useSidebar();
   
   return (
-    <Sidebar side="left" className="border-r border-gold-dark/20">
+    <Sidebar side="left" className="w-[450px] border-r border-gold-dark/20">
       <SidebarContent className="h-full">
         <ChatInterface
           onDrop={onDrop}
