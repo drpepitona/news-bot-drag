@@ -69,6 +69,7 @@ serve(async (req) => {
     // Process NewsData.io results
     if (newsDataResponse.status === 'fulfilled' && newsDataResponse.value.ok) {
       const data = await newsDataResponse.value.json();
+      console.log('NewsData.io response:', JSON.stringify(data).substring(0, 200));
       if (data.results && data.results.length > 0) {
         const filtered = data.results.filter((article: any) => {
           const text = (article.title + ' ' + (article.description || '')).toLowerCase();
@@ -90,12 +91,18 @@ serve(async (req) => {
         })));
       }
     } else {
-      console.error('NewsData.io failed:', newsDataResponse.status === 'rejected' ? newsDataResponse.reason : 'Response not ok');
+      if (newsDataResponse.status === 'fulfilled') {
+        const errorData = await newsDataResponse.value.text();
+        console.error('NewsData.io failed with status:', newsDataResponse.value.status, 'Response:', errorData);
+      } else {
+        console.error('NewsData.io failed:', newsDataResponse.reason);
+      }
     }
 
     // Process TheNewsAPI results
     if (theNewsApiResponse.status === 'fulfilled' && theNewsApiResponse.value.ok) {
       const data = await theNewsApiResponse.value.json();
+      console.log('TheNewsAPI response:', JSON.stringify(data).substring(0, 200));
       if (data.data && data.data.length > 0) {
         const filtered = data.data.filter((article: any) => {
           const text = (article.title + ' ' + (article.description || '')).toLowerCase();
@@ -117,7 +124,12 @@ serve(async (req) => {
         })));
       }
     } else {
-      console.error('TheNewsAPI failed:', theNewsApiResponse.status === 'rejected' ? theNewsApiResponse.reason : 'Response not ok');
+      if (theNewsApiResponse.status === 'fulfilled') {
+        const errorData = await theNewsApiResponse.value.text();
+        console.error('TheNewsAPI failed with status:', theNewsApiResponse.value.status, 'Response:', errorData);
+      } else {
+        console.error('TheNewsAPI failed:', theNewsApiResponse.reason);
+      }
     }
 
     // If no articles were fetched, use mock data as fallback
