@@ -75,16 +75,16 @@ const Index = () => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-screen flex w-full bg-background overflow-hidden">
         <ChatSidebar
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           droppedNews={droppedNews}
         />
         
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col min-w-0">
           {/* Header con barra de búsqueda */}
-          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
+          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm flex-shrink-0">
             <div className="flex items-center gap-4 p-4">
               <NewsSearchBar 
                 value={searchQuery} 
