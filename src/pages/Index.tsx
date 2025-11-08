@@ -99,9 +99,7 @@ const Index = () => {
                   onClick={toggleChat}
                   className="bg-gradient-gold hover:opacity-90 transition-opacity shadow-elegant text-black h-10 w-10 p-0 rounded-lg"
                 >
-                  <MessageSquare className={`h-5 w-5 transition-transform duration-300 ${
-                    isChatVisible ? "rotate-0" : "rotate-180"
-                  }`} />
+                  <MessageSquare className="h-5 w-5" />
                 </Button>
                 <NewsSearchBar 
                   value={searchQuery} 
