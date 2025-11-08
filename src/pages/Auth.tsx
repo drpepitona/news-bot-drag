@@ -18,12 +18,23 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    // Verificar si ya está autenticado
+    // Configurar listener de auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          navigate("/");
+        }
+      }
+    );
+
+    // Verificar sesión actual
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/");
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +53,7 @@ export default function Auth() {
       setLoading(true);
 
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -52,6 +63,12 @@ export default function Auth() {
             title: "Error al iniciar sesión",
             description: error.message,
             variant: "destructive",
+          });
+        } else if (data.session) {
+          // La navegación se manejará por el listener onAuthStateChange
+          toast({
+            title: "Inicio de sesión exitoso",
+            description: "Bienvenido de vuelta",
           });
         }
       } else {
