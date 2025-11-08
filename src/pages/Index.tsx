@@ -67,7 +67,7 @@ const Index = () => {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full bg-background">
         <ChatSidebar
           onDrop={handleDrop}
@@ -79,16 +79,17 @@ const Index = () => {
           {/* Header con barra de búsqueda */}
           <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
             <div className="flex items-center gap-4 p-4">
-              <SidebarTrigger className="bg-gradient-gold hover:opacity-80 transition-opacity text-black">
-                <MessageSquare className="h-5 w-5" />
-              </SidebarTrigger>
-              
               <NewsSearchBar 
                 value={searchQuery} 
                 onChange={setSearchQuery} 
               />
             </div>
           </header>
+          
+          {/* Lengueta dorada para abrir el chat */}
+          <SidebarTrigger className="fixed right-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-l-lg shadow-elegant px-3 py-6 border-l-2 border-t-2 border-b-2 border-gold-dark/30">
+            <MessageSquare className="h-5 w-5 text-black" />
+          </SidebarTrigger>
 
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
