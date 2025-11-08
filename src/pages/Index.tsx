@@ -84,7 +84,7 @@ const MainContent = () => {
               className={`bg-gradient-gold hover:opacity-90 shadow-elegant px-3 border-2 border-gold-dark/30 transition-all duration-500 ease-in-out ${
                 open 
                   ? 'relative py-2 rounded-r-lg border-l-0' 
-                  : 'fixed left-0 top-[80%] -translate-y-1/2 z-20 py-6 rounded-r-lg border-l-0'
+                  : 'fixed left-0 top-1/2 -translate-y-1/2 z-20 py-6 rounded-r-lg border-l-0'
               }`}
             >
               <MessageSquare className="h-5 w-5 text-black" />
