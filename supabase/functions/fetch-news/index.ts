@@ -29,12 +29,7 @@ serve(async (req) => {
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     
     if (!NEWS_API_KEY) {
-      console.error('NEWS_API_KEY not configured');
-      // Return mock data if no API key
-      return new Response(
-        JSON.stringify({ articles: getMockNews(region) }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      throw new Error('NEWS_API_KEY not configured');
     }
 
     // Map regions to NewsData.io country codes
@@ -66,12 +61,9 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
-      console.error(`NewsData.io error: ${response.statusText}`);
-      // Return mock data if API fails
-      return new Response(
-        JSON.stringify({ articles: getMockNews(region) }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const errorText = await response.text();
+      console.error(`NewsData.io error: ${response.statusText}`, errorText);
+      throw new Error(`NewsData.io error: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -79,7 +71,7 @@ serve(async (req) => {
     if (!data.results || data.results.length === 0) {
       console.log('No results from NewsData.io');
       return new Response(
-        JSON.stringify({ articles: getMockNews(region) }),
+        JSON.stringify({ articles: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -110,9 +102,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error fetching news:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch news';
     return new Response(
-      JSON.stringify({ articles: getMockNews('all') }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: errorMessage,
+        articles: []
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

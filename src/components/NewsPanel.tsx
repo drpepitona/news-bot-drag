@@ -59,9 +59,10 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
       });
     } catch (error) {
       console.error('Error fetching news:', error);
+      setNews([]);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las noticias. Mostrando datos de ejemplo.",
+        title: "Error al cargar noticias",
+        description: "No se pudieron obtener las noticias de NewsData.io",
         variant: "destructive"
       });
     } finally {
@@ -189,6 +190,11 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
         {loading && news.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <RefreshCw className="h-8 w-8 text-gold-light animate-spin" />
+          </div>
+        ) : news.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-center">
+            <p className="text-muted-foreground text-sm">No hay noticias disponibles</p>
+            <p className="text-muted-foreground text-xs mt-2">Intenta cambiar la región o el rango de fechas</p>
           </div>
         ) : (
           <div className="space-y-3">
