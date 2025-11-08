@@ -387,55 +387,57 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
   return (
     <div className="h-full flex">
       {/* Lista de chats lateral */}
-      {showChatList && (
-        <div className="w-64 border-r border-border bg-black-surface flex flex-col animate-slide-in-left">
-          <div className="p-4 border-b border-border">
-            <Button
-              onClick={createNewChat}
-              className="w-full bg-gradient-gold hover:opacity-90 text-primary-foreground"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Chat
-            </Button>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                    activeChat === chat.id
-                      ? "bg-gold-dark/20 border border-gold-medium/30"
-                      : "hover:bg-black-elevated"
-                  }`}
-                  onClick={() => {
-                    setActiveChat(chat.id);
-                    setShowChatList(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <MessageSquare className="h-4 w-4 text-gold-light flex-shrink-0" />
-                    <span className="text-sm truncate">{chat.name}</span>
-                  </div>
-                  {chats.length > 1 && (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteChat(chat.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+      <div 
+        className={`border-r border-border bg-black-surface flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
+          showChatList ? "w-64" : "w-0"
+        }`}
+      >
+        <div className="p-4 border-b border-border">
+          <Button
+            onClick={createNewChat}
+            className="w-full bg-gradient-gold hover:opacity-90 text-primary-foreground"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Chat
+          </Button>
         </div>
-      )}
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  activeChat === chat.id
+                    ? "bg-gold-dark/20 border border-gold-medium/30"
+                    : "hover:bg-black-elevated"
+                }`}
+                onClick={() => {
+                  setActiveChat(chat.id);
+                  setShowChatList(false);
+                }}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <MessageSquare className="h-4 w-4 text-gold-light flex-shrink-0" />
+                  <span className="text-sm truncate">{chat.name}</span>
+                </div>
+                {chats.length > 1 && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteChat(chat.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Chat principal */}
       <Card
