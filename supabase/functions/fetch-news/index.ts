@@ -120,6 +120,16 @@ serve(async (req) => {
       console.error('TheNewsAPI failed:', theNewsApiResponse.status === 'rejected' ? theNewsApiResponse.reason : 'Response not ok');
     }
 
+    // If no articles were fetched, use mock data as fallback
+    if (allArticles.length === 0) {
+      console.log('No articles from APIs, using mock data');
+      const mockArticles = getMockNews(region);
+      return new Response(
+        JSON.stringify({ articles: mockArticles }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Sort by most recent first
     allArticles.sort((a, b) => {
       const timeA = parseInt(a.time.match(/\d+/)?.[0] || '999');
