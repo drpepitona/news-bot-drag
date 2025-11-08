@@ -67,6 +67,7 @@ const Index = () => {
               defaultSize={30} 
               minSize={20} 
               maxSize={60}
+              className="transition-all duration-300 ease-out"
             >
               <div className={`h-full border-r border-gold-dark/20 ${
                 isAnimating && !isChatVisible 
