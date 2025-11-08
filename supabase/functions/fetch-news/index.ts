@@ -65,7 +65,12 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
-      throw new Error(`NewsAPI error: ${response.statusText}`);
+      console.error(`NewsAPI error: ${response.statusText}`);
+      // Return mock data if API fails
+      return new Response(
+        JSON.stringify({ articles: getMockNews(region) }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
@@ -89,11 +94,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error fetching news:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Failed to fetch news',
-        articles: getMockNews('all')
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ articles: getMockNews('all') }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
