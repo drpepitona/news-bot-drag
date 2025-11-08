@@ -80,7 +80,7 @@ export const NewsPanel = ({
     }
     
     // Filter by search query
-    if (searchQuery.trim()) {
+    if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item => 
         item.title.toLowerCase().includes(query) ||

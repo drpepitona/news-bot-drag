@@ -79,14 +79,8 @@ const Index = () => {
           {/* Header con barra de búsqueda */}
           <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
             <div className="flex items-center gap-4 p-4">
-              <SidebarTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="bg-gradient-gold hover:opacity-80 transition-opacity"
-                >
-                  <MessageSquare className="h-5 w-5 text-black" />
-                </Button>
+              <SidebarTrigger className="bg-gradient-gold hover:opacity-80 transition-opacity text-black">
+                <MessageSquare className="h-5 w-5" />
               </SidebarTrigger>
               
               <NewsSearchBar 
