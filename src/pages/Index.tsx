@@ -14,20 +14,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const ChatToggleButton = () => {
-  const { open } = useSidebar();
-  
-  if (open) return null;
-  
-  return (
-    <SidebarTrigger 
-      className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30"
-    >
-      <MessageSquare className="h-5 w-5 text-black" />
-    </SidebarTrigger>
-  );
-};
-
 const ChatSidebar = ({ 
   onDrop, 
   onDragOver, 
@@ -100,9 +86,10 @@ const Index = () => {
             </div>
           </header>
           
-          
           {/* Lengueta dorada para abrir el chat */}
-          <ChatToggleButton />
+          <SidebarTrigger className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30">
+            <MessageSquare className="h-5 w-5 text-black" />
+          </SidebarTrigger>
 
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
