@@ -68,7 +68,7 @@ const Index = () => {
               minSize={20} 
               maxSize={60}
             >
-              <div className={`h-full border-r border-gold-dark/20 ${isAnimating && !isChatVisible ? "animate-slide-out-left" : ""}`}>
+              <div className={`h-full border-r border-gold-dark/20 ${isAnimating && !isChatVisible ? "animate-slide-out-left" : "animate-slide-in-left"}`}>
                 <ChatInterface
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
