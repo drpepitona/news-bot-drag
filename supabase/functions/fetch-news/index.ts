@@ -28,8 +28,9 @@ serve(async (req) => {
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
+    const WORLDNEWS_API_KEY = Deno.env.get('WORLDNEWS_API_KEY');
     
-    if (!NEWS_API_KEY || !THENEWSAPI_KEY) {
+    if (!NEWS_API_KEY || !THENEWSAPI_KEY || !WORLDNEWS_API_KEY) {
       throw new Error('API keys not configured');
     }
 
@@ -44,8 +45,8 @@ serve(async (req) => {
 
     const country = countryMap[region] || '';
 
-    // Fetch from both APIs in parallel
-    const [newsDataResponse, theNewsApiResponse] = await Promise.allSettled([
+    // Fetch from all APIs in parallel
+    const [newsDataResponse, theNewsApiResponse, worldNewsResponse] = await Promise.allSettled([
       // NewsData.io
       fetch(`https://newsdata.io/api/1/news?${new URLSearchParams({
         apikey: NEWS_API_KEY,
@@ -61,6 +62,14 @@ serve(async (req) => {
         categories: 'business,finance',
         limit: '20',
         ...(region !== 'all' && { search: region })
+      }).toString()}`),
+      
+      // WorldNewsAPI.com
+      fetch(`https://api.worldnewsapi.com/search-news?${new URLSearchParams({
+        'api-key': WORLDNEWS_API_KEY,
+        language: 'en,es',
+        'number': '50',
+        ...(region !== 'all' && country && { 'source-countries': country })
       }).toString()}`)
     ]);
 
@@ -118,6 +127,33 @@ serve(async (req) => {
       }
     } else {
       console.error('TheNewsAPI failed:', theNewsApiResponse.status === 'rejected' ? theNewsApiResponse.reason : 'Response not ok');
+    }
+
+    // Process WorldNewsAPI results
+    if (worldNewsResponse.status === 'fulfilled' && worldNewsResponse.value.ok) {
+      const data = await worldNewsResponse.value.json();
+      if (data.news && data.news.length > 0) {
+        const filtered = data.news.filter((article: any) => {
+          const text = (article.title + ' ' + (article.text || '')).toLowerCase();
+          const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+          const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+          const hasValidUrl = isValidNewsUrl(article.url);
+          return !hasCrypto && hasValidUrl;
+        });
+        
+        allArticles.push(...filtered.map((article: any) => ({
+          title: article.title,
+          category: categorizeTopic(article.title, article.text),
+          sentiment: analyzeSentiment(article.title, article.text),
+          time: formatTimeAgo(article.publish_date),
+          source: article.source_country || 'WorldNewsAPI',
+          imageUrl: article.image,
+          url: article.url,
+          region: region
+        })));
+      }
+    } else {
+      console.error('WorldNewsAPI failed:', worldNewsResponse.status === 'rejected' ? worldNewsResponse.reason : 'Response not ok');
     }
 
     // Sort by most recent first
