@@ -50,7 +50,7 @@ const Index = () => {
         {/* Panel del Chat - Redimensionable */}
         {isChatVisible && (
           <>
-            <ResizablePanel defaultSize={30} minSize={20} maxSize={60} className="animate-slide-in-left">
+            <ResizablePanel defaultSize={30} minSize={20} maxSize={60}>
               <div className="h-full border-r border-gold-dark/20">
                 <ChatInterface
                   onDrop={handleDrop}
@@ -66,7 +66,7 @@ const Index = () => {
         )}
 
         {/* Panel de Noticias */}
-        <ResizablePanel defaultSize={isChatVisible ? 70 : 100} minSize={40} className="transition-all duration-300 ease-out">
+        <ResizablePanel defaultSize={isChatVisible ? 70 : 100} minSize={40}>
           <main className="flex flex-col h-full">
             {/* Header con barra de búsqueda */}
             <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
