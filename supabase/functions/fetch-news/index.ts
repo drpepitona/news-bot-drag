@@ -73,7 +73,9 @@ serve(async (req) => {
         const filtered = data.results.filter((article: any) => {
           const text = (article.title + ' ' + (article.description || '')).toLowerCase();
           const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
-          return !cryptoKeywords.some(keyword => text.includes(keyword));
+          const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+          const hasValidUrl = isValidNewsUrl(article.link);
+          return !hasCrypto && hasValidUrl;
         });
         
         allArticles.push(...filtered.map((article: any) => ({
@@ -98,7 +100,9 @@ serve(async (req) => {
         const filtered = data.data.filter((article: any) => {
           const text = (article.title + ' ' + (article.description || '')).toLowerCase();
           const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
-          return !cryptoKeywords.some(keyword => text.includes(keyword));
+          const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+          const hasValidUrl = isValidNewsUrl(article.url);
+          return !hasCrypto && hasValidUrl;
         });
         
         allArticles.push(...filtered.map((article: any) => ({
@@ -177,6 +181,33 @@ function formatTimeAgo(dateString: string): string {
   if (diffMins < 60) return `Hace ${diffMins} min`;
   if (diffMins < 1440) return `Hace ${Math.floor(diffMins / 60)} horas`;
   return `Hace ${Math.floor(diffMins / 1440)} días`;
+}
+
+function isValidNewsUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  
+  // Filter out invalid URL patterns
+  const invalidPatterns = [
+    'blogger.com/feeds',
+    'feeds.feedburner.com',
+    'localhost',
+    '127.0.0.1',
+  ];
+  
+  const urlLower = url.toLowerCase();
+  
+  // Check for invalid patterns
+  if (invalidPatterns.some(pattern => urlLower.includes(pattern))) {
+    return false;
+  }
+  
+  // Verify it's a valid HTTP/HTTPS URL
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 function getMockNews(region: string): NewsArticle[] {
