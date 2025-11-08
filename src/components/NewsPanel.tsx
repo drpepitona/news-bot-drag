@@ -60,11 +60,11 @@ const mockNews: NewsItem[] = [
 
 export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   return (
-    <div className="h-full flex flex-col bg-surface border-r border-surface-light">
-      <div className="p-6 border-b border-surface-light">
+    <div className="h-full flex flex-col bg-card border-r border-border">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-2">
-          <div className="h-10 w-10 rounded-lg bg-surface-light flex items-center justify-center">
-            <Newspaper className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-lg bg-black-elevated border border-gold-dark/30 flex items-center justify-center">
+            <Newspaper className="h-5 w-5 text-gold-light" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Noticias del Mercado</h2>

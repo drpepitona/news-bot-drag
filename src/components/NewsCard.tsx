@@ -21,12 +21,12 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, news)}
-      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-glow transition-all duration-300 border-surface-light bg-surface hover:bg-surface-light group"
+      className="p-4 cursor-grab active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="text-xs bg-surface-light border-border">
+            <Badge variant="secondary" className="text-xs bg-black-elevated border-gold-dark/30 text-gold-light">
               {news.category}
             </Badge>
             {news.sentiment === "positive" && (
@@ -46,7 +46,7 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
             <span>{news.source}</span>
           </div>
         </div>
-        <div className="h-8 w-1 bg-gradient-metallic rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="h-8 w-1 bg-gradient-gold rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     </Card>
   );

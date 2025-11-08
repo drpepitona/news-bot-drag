@@ -3,6 +3,11 @@ import { NewsPanel } from "@/components/NewsPanel";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 const Index = () => {
   const [draggedNews, setDraggedNews] = useState<NewsItem | null>(null);
@@ -33,14 +38,21 @@ const Index = () => {
 
   return (
     <div className="h-screen w-full bg-background overflow-hidden">
-      <div className="h-full grid grid-cols-1 lg:grid-cols-[400px,1fr]">
-        <NewsPanel onDragStart={handleDragStart} />
-        <ChatInterface
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          droppedNews={droppedNews}
-        />
-      </div>
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+          <NewsPanel onDragStart={handleDragStart} />
+        </ResizablePanel>
+        
+        <ResizableHandle className="w-1 bg-gold-dark/20 hover:bg-gradient-gold transition-all" />
+        
+        <ResizablePanel defaultSize={70} minSize={50}>
+          <ChatInterface
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            droppedNews={droppedNews}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };

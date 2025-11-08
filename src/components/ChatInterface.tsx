@@ -56,15 +56,15 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
     <Card
       onDrop={onDrop}
       onDragOver={onDragOver}
-      className="h-full flex flex-col bg-surface border-surface-light relative overflow-hidden"
+      className="h-full flex flex-col bg-card border-border relative overflow-hidden"
     >
       {/* Gradient glow effect */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-glow pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-gold-radial pointer-events-none" />
       
       {/* Header */}
-      <div className="p-6 border-b border-surface-light relative z-10">
+      <div className="p-6 border-b border-border relative z-10">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-gradient-metallic flex items-center justify-center shadow-glow">
+          <div className="h-10 w-10 rounded-lg bg-gradient-gold flex items-center justify-center shadow-gold-glow">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
@@ -85,8 +85,8 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.type === "user"
-                    ? "bg-gradient-metallic text-primary-foreground shadow-glow"
-                    : "bg-surface-light text-foreground border border-border"
+                    ? "bg-gradient-gold text-primary-foreground shadow-gold-glow"
+                    : "bg-black-elevated text-foreground border border-border"
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
@@ -101,8 +101,8 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
           
           {droppedNews.map((news) => (
             <div key={news.id} className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-accent/20 border-2 border-accent text-foreground">
-                <p className="text-xs text-accent font-semibold mb-1">📰 Noticia añadida</p>
+              <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gold-dark/10 border-2 border-gold-medium text-foreground">
+                <p className="text-xs text-gold-light font-semibold mb-1">📰 Noticia añadida</p>
                 <p className="text-sm">{news.title}</p>
               </div>
             </div>
@@ -111,19 +111,19 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-6 border-t border-surface-light relative z-10">
+      <div className="p-6 border-t border-border relative z-10">
         <div className="flex gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder="Escribe un mensaje o arrastra una noticia..."
-            className="flex-1 bg-surface-light border-border focus:border-primary"
+            className="flex-1 bg-black-elevated border-border focus:border-gold-light focus:shadow-gold-glow"
           />
           <Button
             onClick={handleSend}
             size="icon"
-            className="bg-gradient-metallic hover:opacity-90 shadow-glow"
+            className="bg-gradient-gold hover:opacity-90 shadow-gold-glow"
           >
             <Send className="h-4 w-4" />
           </Button>
