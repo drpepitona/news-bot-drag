@@ -20,7 +20,20 @@ const Index = () => {
   const [region, setRegion] = useState<string>("all");
   const [category, setCategory] = useState<string>("all");
   const [isChatVisible, setIsChatVisible] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();
+
+  const toggleChat = () => {
+    if (isChatVisible) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsChatVisible(false);
+        setIsAnimating(false);
+      }, 300); // Duración de la animación
+    } else {
+      setIsChatVisible(true);
+    }
+  };
 
   const handleDragStart = (e: React.DragEvent, news: NewsItem) => {
     setDraggedNews(news);
@@ -48,9 +61,14 @@ const Index = () => {
     <div className="h-screen flex w-full bg-background">
       <ResizablePanelGroup direction="horizontal" className="w-full">
         {/* Panel del Chat - Redimensionable */}
-        {isChatVisible && (
+        {(isChatVisible || isAnimating) && (
           <>
-            <ResizablePanel defaultSize={30} minSize={20} maxSize={60} className="animate-slide-in-left">
+            <ResizablePanel 
+              defaultSize={30} 
+              minSize={20} 
+              maxSize={60} 
+              className={isAnimating && !isChatVisible ? "animate-slide-out-left" : "animate-slide-in-left"}
+            >
               <div className="h-full border-r border-gold-dark/20">
                 <ChatInterface
                   onDrop={handleDrop}
@@ -72,7 +90,7 @@ const Index = () => {
             <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
               <div className="flex items-center gap-4 p-4">
                 <Button
-                  onClick={() => setIsChatVisible(!isChatVisible)}
+                  onClick={toggleChat}
                   className="bg-gradient-gold hover:opacity-90 transition-opacity shadow-elegant text-black h-10 w-10 p-0 rounded-lg"
                 >
                   <MessageSquare className="h-5 w-5" />
