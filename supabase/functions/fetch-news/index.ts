@@ -23,8 +23,8 @@ serve(async (req) => {
   }
 
   try {
-    const { region, from, to } = await req.json();
-    console.log('Fetching news for region:', region, 'from:', from, 'to:', to);
+    const { region } = await req.json();
+    console.log('Fetching news for region:', region);
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
@@ -45,31 +45,23 @@ serve(async (req) => {
     const country = countryMap[region] || '';
 
     // Fetch from both APIs in parallel
-    const newsDataParams: Record<string, string> = {
-      apikey: NEWS_API_KEY,
-      language: 'en,es',
-      category: 'business',
-    };
-    if (country) newsDataParams.country = country;
-    if (from) newsDataParams.from_date = from;
-    if (to) newsDataParams.to_date = to;
-
-    const theNewsApiParams: Record<string, string> = {
-      api_token: THENEWSAPI_KEY,
-      language: 'en,es',
-      categories: 'business,finance',
-      limit: '20',
-    };
-    if (region !== 'all') theNewsApiParams.search = region;
-    if (from) theNewsApiParams.published_after = from;
-    if (to) theNewsApiParams.published_before = to;
-
     const [newsDataResponse, theNewsApiResponse] = await Promise.allSettled([
       // NewsData.io
-      fetch(`https://newsdata.io/api/1/news?${new URLSearchParams(newsDataParams).toString()}`),
+      fetch(`https://newsdata.io/api/1/news?${new URLSearchParams({
+        apikey: NEWS_API_KEY,
+        language: 'en,es',
+        category: 'business',
+        ...(country && { country })
+      }).toString()}`),
       
       // TheNewsAPI.com
-      fetch(`https://api.thenewsapi.com/v1/news/all?${new URLSearchParams(theNewsApiParams).toString()}`)
+      fetch(`https://api.thenewsapi.com/v1/news/all?${new URLSearchParams({
+        api_token: THENEWSAPI_KEY,
+        language: 'en,es',
+        categories: 'business,finance',
+        limit: '20',
+        ...(region !== 'all' && { search: region })
+      }).toString()}`)
     ]);
 
     const allArticles: NewsArticle[] = [];

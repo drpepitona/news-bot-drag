@@ -2,14 +2,9 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { NewsCard, NewsItem } from "./NewsCard";
-import { Newspaper, RefreshCw, Globe2, CalendarIcon } from "lucide-react";
+import { Newspaper, RefreshCw, Globe2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { format, subDays } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -26,10 +21,6 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [region, setRegion] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 7),
-    to: new Date()
-  });
   const { toast } = useToast();
 
   const fetchNews = async (selectedRegion: string) => {
@@ -37,9 +28,7 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
     try {
       const { data, error } = await supabase.functions.invoke('fetch-news', {
         body: { 
-          region: selectedRegion,
-          from: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
-          to: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined
+          region: selectedRegion
         }
       });
 
@@ -78,7 +67,7 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [region, dateRange]);
+  }, [region]);
 
   const getRegionName = (reg: string) => {
     const names: Record<string, string> = {
@@ -127,43 +116,6 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
             </SelectContent>
           </Select>
         </div>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal bg-black-elevated border-border",
-                !dateRange && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange?.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "dd/MM/yyyy")} -{" "}
-                    {format(dateRange.to, "dd/MM/yyyy")}
-                  </>
-                ) : (
-                  format(dateRange.from, "dd/MM/yyyy")
-                )
-              ) : (
-                <span>Seleccionar rango de fechas</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-              className={cn("p-3 pointer-events-auto")}
-            />
-          </PopoverContent>
-        </Popover>
       </div>
 
       <ScrollArea className="flex-1 p-6">
