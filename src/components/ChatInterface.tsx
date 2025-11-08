@@ -113,7 +113,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const newChatName = `Conversación ${chats.length + 1}`;
+      const newChatName = "Nueva conversación";
       
       const { data: newChatData, error: chatError } = await supabase
         .from('chats')
@@ -284,6 +284,9 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
     if (!input.trim() || !activeChat) return;
     
     try {
+      const currentChat = chats.find(chat => chat.id === activeChat);
+      const isFirstUserMessage = currentChat?.messages.every(msg => msg.type !== 'user');
+
       // Guardar mensaje del usuario
       const { data: userMessageData, error: userError } = await supabase
         .from('messages')
@@ -308,6 +311,25 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
           ? { ...chat, messages: [...chat.messages, userMessage] }
           : chat
       ));
+
+      // Si es el primer mensaje del usuario, actualizar el nombre del chat
+      if (isFirstUserMessage) {
+        const chatName = input.length > 40 ? `${input.substring(0, 40)}...` : input;
+        
+        const { error: updateError } = await supabase
+          .from('chats')
+          .update({ name: chatName })
+          .eq('id', activeChat);
+
+        if (!updateError) {
+          setChats(chats => chats.map(chat => 
+            chat.id === activeChat 
+              ? { ...chat, name: chatName }
+              : chat
+          ));
+        }
+      }
+
       setInput("");
       
       // Simular respuesta de AI y guardarla
