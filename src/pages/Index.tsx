@@ -14,6 +14,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+const ChatToggleButton = () => {
+  const { open } = useSidebar();
+  
+  if (open) return null;
+  
+  return (
+    <SidebarTrigger 
+      className="fixed left-0 top-1/2 -translate-y-1/2 z-20 bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30"
+    >
+      <MessageSquare className="h-5 w-5 text-black" />
+    </SidebarTrigger>
+  );
+};
 
 const ChatSidebar = ({ 
   onDrop, 
@@ -25,22 +38,15 @@ const ChatSidebar = ({
   droppedNews: NewsItem[];
 }) => {
   return (
-    <div className="relative">
-      <Sidebar side="left" className="border-r border-gold-dark/20">
-        <SidebarContent className="h-full">
-          <ChatInterface
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            droppedNews={droppedNews}
-          />
-        </SidebarContent>
-      </Sidebar>
-      
-      {/* Lengueta dorada que se mueve con el sidebar */}
-      <SidebarTrigger className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full bg-gradient-gold hover:opacity-90 transition-all rounded-r-lg shadow-elegant px-3 py-6 border-r-2 border-t-2 border-b-2 border-gold-dark/30 z-20">
-        <MessageSquare className="h-5 w-5 text-black" />
-      </SidebarTrigger>
-    </div>
+    <Sidebar side="left" className="border-r border-gold-dark/20">
+      <SidebarContent className="h-full">
+        <ChatInterface
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          droppedNews={droppedNews}
+        />
+      </SidebarContent>
+    </Sidebar>
   );
 };
 
@@ -94,6 +100,10 @@ const Index = () => {
             </div>
           </header>
           
+          
+          {/* Lengueta dorada para abrir el chat */}
+          <ChatToggleButton />
+
           {/* Panel de noticias - área principal */}
           <div className="flex-1 overflow-hidden">
             <NewsPanel 
