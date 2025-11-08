@@ -81,8 +81,10 @@ const MainContent = () => {
           <div className="flex items-center gap-4 p-4">
             {/* Lengueta dorada que se mueve con el chat */}
             <SidebarTrigger 
-              className={`bg-gradient-gold hover:opacity-90 transition-all duration-300 rounded-r-lg shadow-elegant px-3 py-2 border-r-2 border-t-2 border-b-2 border-gold-dark/30 ${
-                open ? '' : 'fixed left-0 top-1/2 -translate-y-1/2 z-20 py-6'
+              className={`bg-gradient-gold hover:opacity-90 rounded-r-lg shadow-elegant px-3 border-r-2 border-t-2 border-b-2 border-gold-dark/30 transition-all duration-500 ease-in-out ${
+                open 
+                  ? 'relative py-2' 
+                  : 'fixed left-0 top-1/2 -translate-y-1/2 z-20 py-6'
               }`}
             >
               <MessageSquare className="h-5 w-5 text-black" />
