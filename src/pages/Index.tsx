@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 import { NewsPanel } from "@/components/NewsPanel";
 import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,
@@ -14,6 +17,8 @@ import {
 
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
   const [draggedNews, setDraggedNews] = useState<NewsItem | null>(null);
   const [droppedNews, setDroppedNews] = useState<NewsItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,6 +27,29 @@ const Index = () => {
   const [isChatVisible, setIsChatVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();
+
+  // Verificar autenticación
+  useEffect(() => {
+    // Configurar listener de auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (!session) {
+          navigate("/auth");
+        }
+      }
+    );
+
+    // Verificar sesión actual
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const toggleChat = () => {
     if (isChatVisible) {
@@ -60,6 +88,16 @@ const Index = () => {
       setDraggedNews(null);
     }
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
+  // No renderizar nada hasta que se verifique la sesión
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="h-screen flex w-full bg-background">
@@ -109,6 +147,15 @@ const Index = () => {
                   value={searchQuery} 
                   onChange={setSearchQuery} 
                 />
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  className="ml-auto"
+                  size="sm"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Salir
+                </Button>
               </div>
             </header>
 
