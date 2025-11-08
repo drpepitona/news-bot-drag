@@ -1,17 +1,47 @@
 import { useState } from "react";
 import { NewsPanel } from "@/components/NewsPanel";
+import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+  Sidebar,
+  SidebarContent,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const ChatSidebar = ({ 
+  onDrop, 
+  onDragOver, 
+  droppedNews 
+}: { 
+  onDrop: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  droppedNews: NewsItem[];
+}) => {
+  return (
+    <Sidebar side="left" className="border-r border-gold-dark/20">
+      <SidebarContent className="h-full">
+        <ChatInterface
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          droppedNews={droppedNews}
+        />
+      </SidebarContent>
+    </Sidebar>
+  );
+};
 
 const Index = () => {
   const [draggedNews, setDraggedNews] = useState<NewsItem | null>(null);
   const [droppedNews, setDroppedNews] = useState<NewsItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [region, setRegion] = useState<string>("all");
+  const [category, setCategory] = useState<string>("all");
   const { toast } = useToast();
 
   const handleDragStart = (e: React.DragEvent, news: NewsItem) => {
@@ -37,23 +67,49 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-background overflow-hidden">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-          <NewsPanel onDragStart={handleDragStart} />
-        </ResizablePanel>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <ChatSidebar
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          droppedNews={droppedNews}
+        />
         
-        <ResizableHandle className="w-1 bg-gold-dark/20 hover:bg-gradient-gold transition-all" />
-        
-        <ResizablePanel defaultSize={70} minSize={50}>
-          <ChatInterface
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            droppedNews={droppedNews}
-          />
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
+        <main className="flex-1 flex flex-col">
+          {/* Header con barra de búsqueda */}
+          <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
+            <div className="flex items-center gap-4 p-4">
+              <SidebarTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="bg-gradient-gold hover:opacity-80 transition-opacity"
+                >
+                  <MessageSquare className="h-5 w-5 text-black" />
+                </Button>
+              </SidebarTrigger>
+              
+              <NewsSearchBar 
+                value={searchQuery} 
+                onChange={setSearchQuery} 
+              />
+            </div>
+          </header>
+
+          {/* Panel de noticias - área principal */}
+          <div className="flex-1 overflow-hidden">
+            <NewsPanel 
+              onDragStart={handleDragStart}
+              searchQuery={searchQuery}
+              region={region}
+              category={category}
+              onRegionChange={setRegion}
+              onCategoryChange={setCategory}
+            />
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 

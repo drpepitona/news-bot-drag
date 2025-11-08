@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { NewsCard, NewsItem } from "./NewsCard";
-import { Newspaper, RefreshCw, Globe2, Filter } from "lucide-react";
+import { RefreshCw, Globe2, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -15,14 +15,24 @@ import {
 
 interface NewsPanelProps {
   onDragStart: (e: React.DragEvent, news: NewsItem) => void;
+  searchQuery: string;
+  region: string;
+  category: string;
+  onRegionChange: (region: string) => void;
+  onCategoryChange: (category: string) => void;
 }
 
-export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
+export const NewsPanel = ({ 
+  onDragStart, 
+  searchQuery, 
+  region, 
+  category,
+  onRegionChange,
+  onCategoryChange 
+}: NewsPanelProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [region, setRegion] = useState<string>("all");
-  const [category, setCategory] = useState<string>("all");
   const { toast } = useToast();
 
   const fetchNews = async (selectedRegion: string) => {
@@ -62,12 +72,24 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   };
 
   useEffect(() => {
-    if (category === "all") {
-      setFilteredNews(news);
-    } else {
-      setFilteredNews(news.filter(item => item.category === category));
+    let filtered = news;
+    
+    // Filter by category
+    if (category !== "all") {
+      filtered = filtered.filter(item => item.category === category);
     }
-  }, [category, news]);
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.title.toLowerCase().includes(query) ||
+        item.source.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredNews(filtered);
+  }, [category, news, searchQuery]);
 
 
   useEffect(() => {
@@ -92,16 +114,9 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
     return names[reg] || reg;
   };
   return (
-    <div className="h-full flex flex-col bg-card border-r border-border">
-      <div className="p-6 border-b border-border space-y-4">
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b border-border space-y-3 bg-card/50 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-black-elevated border border-gold-dark/30 flex items-center justify-center">
-            <Newspaper className="h-5 w-5 text-gold-light" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-foreground">Noticias del Mercado</h2>
-            <p className="text-xs text-muted-foreground">Arrastra al chat para analizar</p>
-          </div>
           <Button
             size="icon"
             variant="ghost"
@@ -109,46 +124,46 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
             disabled={loading}
             className="hover:bg-gold-dark/10"
           >
-            <RefreshCw className={`h-4 w-4 text-gold-light ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-5 w-5 text-gold-light ${loading ? 'animate-spin' : ''}`} />
           </Button>
-        </div>
+          
+          <div className="flex-1 flex items-center gap-2">
+            <Globe2 className="h-4 w-4 text-muted-foreground" />
+            <Select value={region} onValueChange={onRegionChange}>
+              <SelectTrigger className="flex-1 bg-black-elevated border-border h-9">
+                <SelectValue placeholder="Región" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="all">🌍 Todas</SelectItem>
+                <SelectItem value="us">🇺🇸 EE.UU.</SelectItem>
+                <SelectItem value="china">🇨🇳 China</SelectItem>
+                <SelectItem value="asia">🌏 Asia</SelectItem>
+                <SelectItem value="europe">🇪🇺 Europa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <Globe2 className="h-4 w-4 text-muted-foreground" />
-          <Select value={region} onValueChange={setRegion}>
-            <SelectTrigger className="flex-1 bg-black-elevated border-border">
-              <SelectValue placeholder="Seleccionar región" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              <SelectItem value="all">🌍 Todo el mundo</SelectItem>
-              <SelectItem value="us">🇺🇸 Estados Unidos</SelectItem>
-              <SelectItem value="china">🇨🇳 China</SelectItem>
-              <SelectItem value="asia">🌏 Asia</SelectItem>
-              <SelectItem value="europe">🇪🇺 Europa</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="flex-1 bg-black-elevated border-border">
-              <SelectValue placeholder="Filtrar por categoría" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              <SelectItem value="all">📊 Todas las categorías</SelectItem>
-              <SelectItem value="Acciones">📈 Acciones</SelectItem>
-              <SelectItem value="Forex">💱 Forex</SelectItem>
-              <SelectItem value="Materias Primas">🥇 Materias Primas</SelectItem>
-              <SelectItem value="Energía">⚡ Energía</SelectItem>
-              <SelectItem value="Bonos">📄 Bonos</SelectItem>
-              <SelectItem value="Mercados">💼 Mercados</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex-1 flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={category} onValueChange={onCategoryChange}>
+              <SelectTrigger className="flex-1 bg-black-elevated border-border h-9">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="all">📊 Todas</SelectItem>
+                <SelectItem value="Acciones">📈 Acciones</SelectItem>
+                <SelectItem value="Forex">💱 Forex</SelectItem>
+                <SelectItem value="Materias Primas">🥇 Materias</SelectItem>
+                <SelectItem value="Energía">⚡ Energía</SelectItem>
+                <SelectItem value="Bonos">📄 Bonos</SelectItem>
+                <SelectItem value="Mercados">💼 Mercados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6">
+      <ScrollArea className="flex-1 p-4">
         {loading && filteredNews.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <RefreshCw className="h-8 w-8 text-gold-light animate-spin" />
@@ -157,11 +172,12 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <p className="text-muted-foreground text-sm">No hay noticias disponibles</p>
             <p className="text-muted-foreground text-xs mt-2">
-              {category !== "all" ? "Intenta cambiar el filtro de categoría" : "Intenta cambiar la región"}
+              {searchQuery ? "Intenta con otros términos de búsqueda" : 
+               category !== "all" ? "Intenta cambiar el filtro de categoría" : "Intenta cambiar la región"}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredNews.map((item) => (
               <NewsCard key={item.id} news={item} onDragStart={onDragStart} />
             ))}
