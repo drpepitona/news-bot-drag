@@ -379,7 +379,15 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
                       : "bg-black-elevated text-foreground border border-border"
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
+                  <div 
+                    className="text-sm whitespace-pre-wrap break-words"
+                    dangerouslySetInnerHTML={{
+                      __html: message.content.replace(
+                        /(https?:\/\/[^\s]+)/g,
+                        '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-80">$1</a>'
+                      )
+                    }}
+                  />
                   {message.news && (
                     <div className="mt-2 p-2 bg-background/50 rounded-lg">
                       <p className="text-xs font-medium">{message.news.title}</p>
