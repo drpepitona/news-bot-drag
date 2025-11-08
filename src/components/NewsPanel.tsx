@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { NewsCard, NewsItem } from "./NewsCard";
-import { Newspaper, RefreshCw, Globe2 } from "lucide-react";
+import { Newspaper, RefreshCw, Globe2, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { format, subMonths } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 interface NewsPanelProps {
   onDragStart: (e: React.DragEvent, news: NewsItem) => void;
@@ -21,13 +29,19 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [region, setRegion] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date>(subMonths(new Date(), 1));
+  const [dateTo, setDateTo] = useState<Date>(new Date());
   const { toast } = useToast();
 
-  const fetchNews = async (selectedRegion: string) => {
+  const fetchNews = async (selectedRegion: string, from: Date, to: Date) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-news', {
-        body: { region: selectedRegion }
+        body: { 
+          region: selectedRegion,
+          from: format(from, 'yyyy-MM-dd'),
+          to: format(to, 'yyyy-MM-dd')
+        }
       });
 
       if (error) throw error;
@@ -56,15 +70,15 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
   };
 
   useEffect(() => {
-    fetchNews(region);
+    fetchNews(region, dateFrom, dateTo);
     
     // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
-      fetchNews(region);
+      fetchNews(region, dateFrom, dateTo);
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [region]);
+  }, [region, dateFrom, dateTo]);
 
   const getRegionName = (reg: string) => {
     const names: Record<string, string> = {
@@ -90,7 +104,7 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => fetchNews(region)}
+            onClick={() => fetchNews(region, dateFrom, dateTo)}
             disabled={loading}
             className="hover:bg-gold-dark/10"
           >
@@ -104,7 +118,7 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
             <SelectTrigger className="flex-1 bg-black-elevated border-border">
               <SelectValue placeholder="Seleccionar región" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover border-border">
               <SelectItem value="all">🌍 Todo el mundo</SelectItem>
               <SelectItem value="us">🇺🇸 Estados Unidos</SelectItem>
               <SelectItem value="china">🇨🇳 China</SelectItem>
@@ -112,6 +126,62 @@ export const NewsPanel = ({ onDragStart }: NewsPanelProps) => {
               <SelectItem value="europe">🇪🇺 Europa</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Rango de fechas</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal bg-black-elevated border-border text-xs",
+                    !dateFrom && "text-muted-foreground"
+                  )}
+                >
+                  {dateFrom ? format(dateFrom, "dd/MM/yy") : "Desde"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={(date) => date && setDateFrom(date)}
+                  disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal bg-black-elevated border-border text-xs",
+                    !dateTo && "text-muted-foreground"
+                  )}
+                >
+                  {dateTo ? format(dateTo, "dd/MM/yy") : "Hasta"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={(date) => date && setDateTo(date)}
+                  disabled={(date) => date > new Date() || date < dateFrom}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 

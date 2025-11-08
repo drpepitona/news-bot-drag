@@ -22,8 +22,8 @@ serve(async (req) => {
   }
 
   try {
-    const { region } = await req.json();
-    console.log('Fetching news for region:', region);
+    const { region, from, to } = await req.json();
+    console.log('Fetching news for region:', region, 'from:', from, 'to:', to);
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     
@@ -47,9 +47,20 @@ serve(async (req) => {
 
     const country = countryMap[region] || 'us';
 
+    // Build the NewsAPI URL with date parameters
+    const params = new URLSearchParams({
+      country: country,
+      category: 'business',
+      pageSize: '100',
+      apiKey: NEWS_API_KEY,
+    });
+
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+
     // Fetch real news from NewsAPI
     const response = await fetch(
-      `https://newsapi.org/v2/top-headlines?country=${country}&category=business&pageSize=20&apiKey=${NEWS_API_KEY}`
+      `https://newsapi.org/v2/top-headlines?${params.toString()}`
     );
 
     if (!response.ok) {
