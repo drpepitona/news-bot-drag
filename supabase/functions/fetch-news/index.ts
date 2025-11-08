@@ -75,7 +75,14 @@ serve(async (req) => {
 
     const data = await response.json();
     
-    const articles: NewsArticle[] = data.articles.map((article: any) => ({
+    // Filter out cryptocurrency news
+    const filteredArticles = data.articles.filter((article: any) => {
+      const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+      const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+      return !cryptoKeywords.some(keyword => text.includes(keyword));
+    });
+    
+    const articles: NewsArticle[] = filteredArticles.map((article: any) => ({
       title: article.title,
       category: categorizeTopic(article.title, article.description),
       sentiment: analyzeSentiment(article.title, article.description),
@@ -151,13 +158,13 @@ function getMockNews(region: string): NewsArticle[] {
       region: "all"
     },
     {
-      title: "Bitcoin supera los $65,000 impulsado por demanda institucional",
-      category: "Criptomonedas",
+      title: "El petróleo alcanza $85 por barril ante tensiones en Medio Oriente",
+      category: "Energía",
       sentiment: "positive",
       time: "Hace 30 min",
-      source: "CoinDesk",
-      imageUrl: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400",
-      url: "https://www.coindesk.com",
+      source: "Reuters",
+      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
+      url: "https://www.reuters.com",
       region: "all"
     },
     {
