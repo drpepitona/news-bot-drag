@@ -37,35 +37,36 @@ serve(async (req) => {
       );
     }
 
-    // Map regions to NewsAPI country codes
+    // Map regions to NewsData.io country codes
     const countryMap: Record<string, string> = {
       'us': 'us',
       'china': 'cn',
-      'asia': 'jp,kr,in',
-      'europe': 'gb,de,fr',
-      'all': 'us,cn,gb,de,fr,jp'
+      'asia': 'jp,kr,sg,in',
+      'europe': 'gb,de,fr,es,it',
+      'all': ''
     };
 
-    const country = countryMap[region] || 'us';
+    const country = countryMap[region] || '';
 
-    // Build the NewsAPI URL with date parameters
+    // Build the NewsData.io URL with parameters
     const params = new URLSearchParams({
-      country: country,
+      apikey: NEWS_API_KEY,
+      language: 'en,es',
       category: 'business',
-      pageSize: '100',
-      apiKey: NEWS_API_KEY,
+      size: '10',
     });
 
-    if (from) params.append('from', from);
-    if (to) params.append('to', to);
+    if (country) params.append('country', country);
+    if (from) params.append('from_date', from);
+    if (to) params.append('to_date', to);
 
-    // Fetch real news from NewsAPI
+    // Fetch news from NewsData.io
     const response = await fetch(
-      `https://newsapi.org/v2/top-headlines?${params.toString()}`
+      `https://newsdata.io/api/1/news?${params.toString()}`
     );
 
     if (!response.ok) {
-      console.error(`NewsAPI error: ${response.statusText}`);
+      console.error(`NewsData.io error: ${response.statusText}`);
       // Return mock data if API fails
       return new Response(
         JSON.stringify({ articles: getMockNews(region) }),
@@ -75,8 +76,17 @@ serve(async (req) => {
 
     const data = await response.json();
     
+    if (!data.results || data.results.length === 0) {
+      console.log('No results from NewsData.io');
+      return new Response(
+        JSON.stringify({ articles: getMockNews(region) }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    
     // Filter out cryptocurrency news
-    const filteredArticles = data.articles.filter((article: any) => {
+    const filteredArticles = data.results.filter((article: any) => {
       const text = (article.title + ' ' + (article.description || '')).toLowerCase();
       const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
       return !cryptoKeywords.some(keyword => text.includes(keyword));
@@ -86,10 +96,10 @@ serve(async (req) => {
       title: article.title,
       category: categorizeTopic(article.title, article.description),
       sentiment: analyzeSentiment(article.title, article.description),
-      time: formatTimeAgo(article.publishedAt),
-      source: article.source.name,
-      imageUrl: article.urlToImage,
-      url: article.url,
+      time: formatTimeAgo(article.pubDate),
+      source: article.source_id || 'Unknown',
+      imageUrl: article.image_url,
+      url: article.link,
       region: region
     }));
 
