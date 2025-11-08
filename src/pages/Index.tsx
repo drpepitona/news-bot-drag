@@ -24,7 +24,7 @@ const ChatSidebar = ({
   droppedNews: NewsItem[];
 }) => {
   return (
-    <Sidebar side="right" className="border-l border-gold-dark/20">
+    <Sidebar side="left" className="border-r border-gold-dark/20">
       <SidebarContent className="h-full">
         <ChatInterface
           onDrop={onDrop}
