@@ -32,23 +32,23 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
       draggable
       onDragStart={(e) => onDragStart(e, news)}
       onClick={handleClick}
-      className="p-4 cursor-pointer active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
+      className="p-6 cursor-pointer active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex flex-col gap-4">
         {news.imageUrl && (
-          <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gold-dark/30">
+          <div className="w-full h-48 rounded-lg overflow-hidden border border-gold-dark/30">
             <img 
               src={news.imageUrl} 
               alt={news.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs bg-black-elevated border-gold-dark/30 text-gold-light">
               {news.category}
             </Badge>
@@ -59,17 +59,17 @@ export const NewsCard = ({ news, onDragStart }: NewsCardProps) => {
               <TrendingDown className="h-4 w-4 text-red-400" />
             )}
           </div>
-          <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2 group-hover:text-gold-light transition-colors">
+          <h3 className="text-base font-semibold text-foreground line-clamp-3 group-hover:text-gold-light transition-colors leading-relaxed">
             {news.title}
           </h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
             <span>{news.time}</span>
             <span>•</span>
-            <span>{news.source}</span>
+            <span className="truncate">{news.source}</span>
           </div>
         </div>
-        <div className="h-8 w-1 bg-gradient-gold rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="h-1 w-full bg-gradient-gold rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     </Card>
   );
