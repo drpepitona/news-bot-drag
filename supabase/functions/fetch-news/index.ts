@@ -29,8 +29,9 @@ serve(async (req) => {
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
     const GNEWS_API_KEY = Deno.env.get('GNEWS_API_KEY');
+    const STOCKNEWS_API_KEY = Deno.env.get('STOCKNEWS_API_KEY');
     
-    if (!NEWS_API_KEY && !THENEWSAPI_KEY && !GNEWS_API_KEY) {
+    if (!NEWS_API_KEY && !THENEWSAPI_KEY && !GNEWS_API_KEY && !STOCKNEWS_API_KEY) {
       throw new Error('No API keys configured');
     }
 
@@ -81,6 +82,17 @@ serve(async (req) => {
           topic: 'business',
           max: '20',
           ...(region !== 'all' && { country: gnewsCountry })
+        }).toString()}`)
+      );
+    }
+    
+    if (STOCKNEWS_API_KEY) {
+      // StockNews API
+      apiCalls.push(
+        fetch(`https://stocknewsapi.com/api/v1?${new URLSearchParams({
+          tickers: '',
+          items: '50',
+          token: STOCKNEWS_API_KEY
         }).toString()}`)
       );
     }
@@ -196,6 +208,43 @@ serve(async (req) => {
           console.error('GNews failed with status:', gnewsResponse.value.status, 'Response:', errorData);
         } else {
           console.error('GNews failed:', gnewsResponse.reason);
+        }
+      }
+      apiIndex++;
+    }
+
+    // Process StockNews results
+    if (STOCKNEWS_API_KEY && responses[apiIndex]) {
+      const stockNewsResponse = responses[apiIndex];
+      if (stockNewsResponse.status === 'fulfilled' && stockNewsResponse.value.ok) {
+        const data = await stockNewsResponse.value.json();
+        console.log('StockNews response:', JSON.stringify(data).substring(0, 200));
+        if (data.data && data.data.length > 0) {
+          const filtered = data.data.filter((article: any) => {
+            const text = (article.title + ' ' + (article.text || '')).toLowerCase();
+            const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+            const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+            const hasValidUrl = isValidNewsUrl(article.news_url);
+            return !hasCrypto && hasValidUrl;
+          });
+          
+          allArticles.push(...filtered.map((article: any) => ({
+            title: article.title,
+            category: categorizeTopic(article.title, article.text || ''),
+            sentiment: article.sentiment === 'Positive' ? 'positive' : article.sentiment === 'Negative' ? 'negative' : 'neutral',
+            time: formatTimeAgo(article.date),
+            source: article.source_name || 'StockNews',
+            imageUrl: article.image_url,
+            url: article.news_url,
+            region: region
+          })));
+        }
+      } else {
+        if (stockNewsResponse.status === 'fulfilled') {
+          const errorData = await stockNewsResponse.value.text();
+          console.error('StockNews failed with status:', stockNewsResponse.value.status, 'Response:', errorData);
+        } else {
+          console.error('StockNews failed:', stockNewsResponse.reason);
         }
       }
     }

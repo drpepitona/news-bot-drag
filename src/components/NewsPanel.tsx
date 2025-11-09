@@ -97,10 +97,10 @@ export const NewsPanel = ({
   useEffect(() => {
     fetchNews(region);
     
-    // Auto-refresh every 30 minutes
+    // Auto-refresh every 24 hours
     const interval = setInterval(() => {
       fetchNews(region);
-    }, 30 * 60 * 1000);
+    }, 24 * 60 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [region]);
