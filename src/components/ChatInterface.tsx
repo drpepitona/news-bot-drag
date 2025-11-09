@@ -276,37 +276,55 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           : chat
       ));
 
-      // Simular respuesta de AI
-      setTimeout(async () => {
-        const aiContent = `He recibido la noticia: "${news.title}". ¿Qué te gustaría saber sobre esta información?`;
-        
-        const { data: aiMessageData, error: aiError } = await supabase
-          .from('messages')
-          .insert([{
-            chat_id: activeChat,
-            type: 'ai',
-            content: aiContent
-          }])
-          .select()
-          .single();
+      // Obtener respuesta de la API
+      const chatHistory = chats.find(c => c.id === activeChat)?.messages || [];
+      const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: newsContent,
+          history: chatHistory.map(msg => ({
+            role: msg.type === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }))
+        })
+      });
 
-        if (aiError) {
-          console.error('Error saving AI message:', aiError);
-          return;
-        }
+      if (!response.ok) {
+        throw new Error('Error al obtener respuesta del chatbot');
+      }
 
-        const aiMessage: Message = {
-          id: aiMessageData.id,
-          type: "ai",
-          content: aiContent,
-        };
-        
-        setChats(chats => chats.map(chat => 
-          chat.id === activeChat 
-            ? { ...chat, messages: [...chat.messages, aiMessage] }
-            : chat
-        ));
-      }, 1000);
+      const data = await response.json();
+      const aiContent = data.response || 'No se pudo procesar la respuesta';
+      
+      const { data: aiMessageData, error: aiError } = await supabase
+        .from('messages')
+        .insert([{
+          chat_id: activeChat,
+          type: 'ai',
+          content: aiContent
+        }])
+        .select()
+        .single();
+
+      if (aiError) {
+        console.error('Error saving AI message:', aiError);
+        return;
+      }
+
+      const aiMessage: Message = {
+        id: aiMessageData.id,
+        type: "ai",
+        content: aiContent,
+      };
+      
+      setChats(chats => chats.map(chat => 
+        chat.id === activeChat 
+          ? { ...chat, messages: [...chat.messages, aiMessage] }
+          : chat
+      ));
     } catch (error) {
       console.error('Error sending news message:', error);
       toast({
@@ -352,37 +370,55 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       ));
       setInput("");
       
-      // Simular respuesta de AI y guardarla
-      setTimeout(async () => {
-        const aiContent = "Entendido. ¿Qué aspecto de esta información te gustaría que analice?";
-        
-        const { data: aiMessageData, error: aiError } = await supabase
-          .from('messages')
-          .insert([{
-            chat_id: activeChat,
-            type: 'ai',
-            content: aiContent
-          }])
-          .select()
-          .single();
+      // Obtener respuesta de la API
+      const chatHistory = chats.find(c => c.id === activeChat)?.messages || [];
+      const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          history: chatHistory.map(msg => ({
+            role: msg.type === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }))
+        })
+      });
 
-        if (aiError) {
-          console.error('Error saving AI message:', aiError);
-          return;
-        }
+      if (!response.ok) {
+        throw new Error('Error al obtener respuesta del chatbot');
+      }
 
-        const aiMessage: Message = {
-          id: aiMessageData.id,
-          type: "ai",
-          content: aiContent,
-        };
-        
-        setChats(chats => chats.map(chat => 
-          chat.id === activeChat 
-            ? { ...chat, messages: [...chat.messages, aiMessage] }
-            : chat
-        ));
-      }, 1000);
+      const data = await response.json();
+      const aiContent = data.response || 'No se pudo procesar la respuesta';
+      
+      const { data: aiMessageData, error: aiError } = await supabase
+        .from('messages')
+        .insert([{
+          chat_id: activeChat,
+          type: 'ai',
+          content: aiContent
+        }])
+        .select()
+        .single();
+
+      if (aiError) {
+        console.error('Error saving AI message:', aiError);
+        return;
+      }
+
+      const aiMessage: Message = {
+        id: aiMessageData.id,
+        type: "ai",
+        content: aiContent,
+      };
+      
+      setChats(chats => chats.map(chat => 
+        chat.id === activeChat 
+          ? { ...chat, messages: [...chat.messages, aiMessage] }
+          : chat
+      ));
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
