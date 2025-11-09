@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles, Plus, MessageSquare, Trash2, ArrowDown } from "lucide-react";
 import { NewsItem } from "./NewsCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,7 +94,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
 
   // Detectar scroll para mostrar/ocultar botón
   useEffect(() => {
-    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    const scrollContainer = scrollAreaRef.current;
     if (!scrollContainer) return;
 
     const handleScroll = () => {
@@ -108,7 +107,9 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   }, [currentMessages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
   };
 
   const loadChats = async () => {
@@ -536,7 +537,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
 
         {showChatList && (
           <div className="p-4 border-b bg-muted/50">
-            <ScrollArea className="h-32">
+            <div className="h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
               <div className="space-y-2">
                 {chats.map((chat) => (
                   <div
@@ -561,12 +562,15 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         )}
 
         <div className="flex-1 relative overflow-hidden">
-          <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
+          <div 
+            ref={scrollAreaRef}
+            className="h-full overflow-y-auto p-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+          >
             <div className="space-y-4 pb-4">
               {currentMessages.map((message) => (
                 <div
@@ -586,7 +590,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
               ))}
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
           
           {showScrollButton && (
             <Button
