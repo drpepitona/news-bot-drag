@@ -92,9 +92,16 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     }
   }, [droppedNews, activeChat]);
 
-  // Auto-scroll cuando llegan nuevos mensajes
+  // Auto-scroll cuando llegan nuevos mensajes (solo si el usuario estaba al final)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+    
+    const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
+    
+    if (isNearBottom || currentMessages.length === 1) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [currentMessages]);
 
   const loadChats = async () => {
