@@ -7,7 +7,7 @@ import { NewsSearchBar } from "@/components/NewsSearchBar";
 import { ChatInterface } from "@/components/ChatInterface";
 import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
-import { MessageSquare, LogOut } from "lucide-react";
+import { MessageSquare, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ResizablePanelGroup,
@@ -28,28 +28,22 @@ const Index = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();
 
-  // Verificar autenticación
+  // Verificar autenticación (sin redireccionar automáticamente)
   useEffect(() => {
     // Configurar listener de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
-        if (!session) {
-          navigate("/auth");
-        }
       }
     );
 
     // Verificar sesión actual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (!session) {
-        navigate("/auth");
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const toggleChat = () => {
     if (isChatVisible) {
@@ -89,15 +83,15 @@ const Index = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const handleAuthAction = () => {
+    if (session) {
+      // Si está logueado, cerrar sesión
+      supabase.auth.signOut();
+    } else {
+      // Si no está logueado, ir a página de auth
+      navigate("/auth");
+    }
   };
-
-  // No renderizar nada hasta que se verifique la sesión
-  if (!session) {
-    return null;
-  }
 
   return (
     <div className="h-screen flex w-full bg-background">
@@ -148,13 +142,13 @@ const Index = () => {
                   onChange={setSearchQuery} 
                 />
                 <Button
-                  onClick={handleSignOut}
+                  onClick={handleAuthAction}
                   variant="outline"
                   className="ml-auto"
                   size="sm"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Salir
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {session ? "Salir" : "Registrarte"}
                 </Button>
               </div>
             </header>
