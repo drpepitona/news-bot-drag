@@ -20,6 +20,7 @@ interface NewsPanelProps {
   category: string;
   onRegionChange: (region: string) => void;
   onCategoryChange: (category: string) => void;
+  onAnalyzeNews?: (news: NewsItem) => void;
 }
 
 export const NewsPanel = ({ 
@@ -28,7 +29,8 @@ export const NewsPanel = ({
   region, 
   category,
   onRegionChange,
-  onCategoryChange 
+  onCategoryChange,
+  onAnalyzeNews 
 }: NewsPanelProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
@@ -179,7 +181,7 @@ export const NewsPanel = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
             {filteredNews.map((item) => (
-              <NewsCard key={item.id} news={item} onDragStart={onDragStart} />
+              <NewsCard key={item.id} news={item} onDragStart={onDragStart} onAnalyzeNews={onAnalyzeNews} />
             ))}
           </div>
         )}
