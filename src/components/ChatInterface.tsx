@@ -566,10 +566,10 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           </div>
         )}
 
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative flex flex-col min-h-0">
           <div 
             ref={scrollAreaRef}
-            className="h-full overflow-y-auto p-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+            className="flex-1 overflow-y-auto p-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
           >
             <div className="space-y-4 pb-4">
               {currentMessages.map((message) => (
