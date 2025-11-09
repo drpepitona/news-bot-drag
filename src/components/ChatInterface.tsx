@@ -32,13 +32,13 @@ interface Chat {
 }
 
 interface ChatInterfaceProps {
-  onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
-  droppedNews: NewsItem[];
+  draggedNews: NewsItem | null;
+  onDrop: (draggedNewsItem: NewsItem | null) => void;
   onAuthRequired: () => void;
 }
 
-export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onDragOver, draggedNews, onDrop, onAuthRequired }: ChatInterfaceProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -48,7 +48,6 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { toast } = useToast();
-  const processedNewsCount = useRef(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -83,14 +82,18 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     }
   }, [isAuthenticated]);
 
-  // Procesar noticias arrastradas
+  // Procesar noticias arrastradas - colocar en el input
   useEffect(() => {
-    if (droppedNews.length > processedNewsCount.current && activeChat) {
-      const latestNews = droppedNews[droppedNews.length - 1];
-      handleNewsMessage(latestNews);
-      processedNewsCount.current = droppedNews.length;
+    if (draggedNews && activeChat) {
+      const newsText = `Título: ${draggedNews.title}\n\nCategoía: ${draggedNews.category}\nSentimiento: ${draggedNews.sentiment}\nFuente: ${draggedNews.source}\nHora: ${draggedNews.time}\n${draggedNews.url ? `URL: ${draggedNews.url}` : ""}`;
+      setInput(newsText);
+      onDrop(null); // Limpiar draggedNews
+      toast({
+        title: "Noticia cargada",
+        description: "El texto de la noticia está listo para editar y enviar.",
+      });
     }
-  }, [droppedNews, activeChat]);
+  }, [draggedNews, activeChat]);
 
   // Detectar scroll para mostrar/ocultar botón
   useEffect(() => {
@@ -507,11 +510,16 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     );
   }
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    onDrop(draggedNews);
+  };
+
   return (
     <>
       <Card
         className="flex-1 flex flex-col h-full max-h-screen"
-        onDrop={onDrop}
+        onDrop={handleDrop}
         onDragOver={onDragOver}
       >
         <div className="flex items-center justify-between p-4 border-b flex-shrink-0">

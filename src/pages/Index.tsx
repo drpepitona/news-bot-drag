@@ -15,7 +15,6 @@ const Index = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [draggedNews, setDraggedNews] = useState<NewsItem | null>(null);
-  const [droppedNews, setDroppedNews] = useState<NewsItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [region, setRegion] = useState<string>("all");
   const [category, setCategory] = useState<string>("all");
@@ -66,16 +65,8 @@ const Index = () => {
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (draggedNews) {
-      setDroppedNews([...droppedNews, draggedNews]);
-      toast({
-        title: "Noticia añadida",
-        description: "La noticia ha sido añadida al chat para análisis.",
-      });
-      setDraggedNews(null);
-    }
+  const handleDrop = (draggedNewsItem: NewsItem | null) => {
+    setDraggedNews(draggedNewsItem);
   };
 
   const handleAuthAction = () => {
@@ -105,9 +96,9 @@ const Index = () => {
                 }`}
               >
                 <ChatInterface
-                  onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  droppedNews={droppedNews}
+                  draggedNews={draggedNews}
+                  onDrop={handleDrop}
                   onAuthRequired={() => navigate("/auth")}
                 />
               </div>
