@@ -28,9 +28,10 @@ serve(async (req) => {
 
     const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
     const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
+    const GNEWS_API_KEY = Deno.env.get('GNEWS_API_KEY');
     
-    if (!NEWS_API_KEY || !THENEWSAPI_KEY) {
-      throw new Error('API keys not configured');
+    if (!NEWS_API_KEY && !THENEWSAPI_KEY && !GNEWS_API_KEY) {
+      throw new Error('No API keys configured');
     }
 
     // Map regions to country codes
@@ -44,100 +45,169 @@ serve(async (req) => {
 
     const country = countryMap[region] || '';
 
-    // Fetch from both APIs in parallel
-    const [newsDataResponse, theNewsApiResponse] = await Promise.allSettled([
-      // NewsData.io
-      fetch(`https://newsdata.io/api/1/news?${new URLSearchParams({
-        apikey: NEWS_API_KEY,
-        language: 'en,es',
-        category: 'business',
-        ...(country && { country })
-      }).toString()}`),
-      
-      // TheNewsAPI.com
-      fetch(`https://api.thenewsapi.com/v1/news/all?${new URLSearchParams({
-        api_token: THENEWSAPI_KEY,
-        language: 'en,es',
-        categories: 'business,finance',
-        limit: '20',
-        ...(region !== 'all' && { search: region })
-      }).toString()}`)
-    ]);
+    // Fetch from all three APIs in parallel
+    const apiCalls = [];
+    
+    if (NEWS_API_KEY) {
+      apiCalls.push(
+        fetch(`https://newsdata.io/api/1/news?${new URLSearchParams({
+          apikey: NEWS_API_KEY,
+          language: 'en,es',
+          category: 'business',
+          ...(country && { country })
+        }).toString()}`)
+      );
+    }
+    
+    if (THENEWSAPI_KEY) {
+      apiCalls.push(
+        fetch(`https://api.thenewsapi.com/v1/news/all?${new URLSearchParams({
+          api_token: THENEWSAPI_KEY,
+          language: 'en,es',
+          categories: 'business,finance',
+          limit: '20',
+          ...(region !== 'all' && { search: region })
+        }).toString()}`)
+      );
+    }
+    
+    if (GNEWS_API_KEY) {
+      // GNews API
+      const gnewsCountry = country ? country.split(',')[0] : 'us';
+      apiCalls.push(
+        fetch(`https://gnews.io/api/v4/top-headlines?${new URLSearchParams({
+          token: GNEWS_API_KEY,
+          lang: 'en',
+          topic: 'business',
+          max: '20',
+          ...(region !== 'all' && { country: gnewsCountry })
+        }).toString()}`)
+      );
+    }
+
+    const responses = await Promise.allSettled(apiCalls);
 
     const allArticles: NewsArticle[] = [];
+    let apiIndex = 0;
 
     // Process NewsData.io results
-    if (newsDataResponse.status === 'fulfilled' && newsDataResponse.value.ok) {
-      const data = await newsDataResponse.value.json();
-      console.log('NewsData.io response:', JSON.stringify(data).substring(0, 200));
-      if (data.results && data.results.length > 0) {
-        const filtered = data.results.filter((article: any) => {
-          const text = (article.title + ' ' + (article.description || '')).toLowerCase();
-          const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
-          const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
-          const hasValidUrl = isValidNewsUrl(article.link);
-          return !hasCrypto && hasValidUrl;
-        });
-        
-        allArticles.push(...filtered.map((article: any) => ({
-          title: article.title,
-          category: categorizeTopic(article.title, article.description),
-          sentiment: analyzeSentiment(article.title, article.description),
-          time: formatTimeAgo(article.pubDate),
-          source: article.source_id || 'NewsData.io',
-          imageUrl: article.image_url,
-          url: article.link,
-          region: region
-        })));
-      }
-    } else {
-      if (newsDataResponse.status === 'fulfilled') {
-        const errorData = await newsDataResponse.value.text();
-        console.error('NewsData.io failed with status:', newsDataResponse.value.status, 'Response:', errorData);
+    if (NEWS_API_KEY && responses[apiIndex]) {
+      const newsDataResponse = responses[apiIndex];
+      if (newsDataResponse.status === 'fulfilled' && newsDataResponse.value.ok) {
+        const data = await newsDataResponse.value.json();
+        console.log('NewsData.io response:', JSON.stringify(data).substring(0, 200));
+        if (data.results && data.results.length > 0) {
+          const filtered = data.results.filter((article: any) => {
+            const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+            const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+            const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+            const hasValidUrl = isValidNewsUrl(article.link);
+            return !hasCrypto && hasValidUrl;
+          });
+          
+          allArticles.push(...filtered.map((article: any) => ({
+            title: article.title,
+            category: categorizeTopic(article.title, article.description),
+            sentiment: analyzeSentiment(article.title, article.description),
+            time: formatTimeAgo(article.pubDate),
+            source: article.source_id || 'NewsData.io',
+            imageUrl: article.image_url,
+            url: article.link,
+            region: region
+          })));
+        }
       } else {
-        console.error('NewsData.io failed:', newsDataResponse.reason);
+        if (newsDataResponse.status === 'fulfilled') {
+          const errorData = await newsDataResponse.value.text();
+          console.error('NewsData.io failed with status:', newsDataResponse.value.status, 'Response:', errorData);
+        } else {
+          console.error('NewsData.io failed:', newsDataResponse.reason);
+        }
       }
+      apiIndex++;
     }
 
     // Process TheNewsAPI results
-    if (theNewsApiResponse.status === 'fulfilled' && theNewsApiResponse.value.ok) {
-      const data = await theNewsApiResponse.value.json();
-      console.log('TheNewsAPI response:', JSON.stringify(data).substring(0, 200));
-      if (data.data && data.data.length > 0) {
-        const filtered = data.data.filter((article: any) => {
-          const text = (article.title + ' ' + (article.description || '')).toLowerCase();
-          const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
-          const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
-          const hasValidUrl = isValidNewsUrl(article.url);
-          return !hasCrypto && hasValidUrl;
-        });
-        
-        allArticles.push(...filtered.map((article: any) => ({
-          title: article.title,
-          category: categorizeTopic(article.title, article.description),
-          sentiment: analyzeSentiment(article.title, article.description),
-          time: formatTimeAgo(article.published_at),
-          source: article.source || 'TheNewsAPI',
-          imageUrl: article.image_url,
-          url: article.url,
-          region: region
-        })));
-      }
-    } else {
-      if (theNewsApiResponse.status === 'fulfilled') {
-        const errorData = await theNewsApiResponse.value.text();
-        console.error('TheNewsAPI failed with status:', theNewsApiResponse.value.status, 'Response:', errorData);
+    if (THENEWSAPI_KEY && responses[apiIndex]) {
+      const theNewsApiResponse = responses[apiIndex];
+      if (theNewsApiResponse.status === 'fulfilled' && theNewsApiResponse.value.ok) {
+        const data = await theNewsApiResponse.value.json();
+        console.log('TheNewsAPI response:', JSON.stringify(data).substring(0, 200));
+        if (data.data && data.data.length > 0) {
+          const filtered = data.data.filter((article: any) => {
+            const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+            const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+            const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+            const hasValidUrl = isValidNewsUrl(article.url);
+            return !hasCrypto && hasValidUrl;
+          });
+          
+          allArticles.push(...filtered.map((article: any) => ({
+            title: article.title,
+            category: categorizeTopic(article.title, article.description),
+            sentiment: analyzeSentiment(article.title, article.description),
+            time: formatTimeAgo(article.published_at),
+            source: article.source || 'TheNewsAPI',
+            imageUrl: article.image_url,
+            url: article.url,
+            region: region
+          })));
+        }
       } else {
-        console.error('TheNewsAPI failed:', theNewsApiResponse.reason);
+        if (theNewsApiResponse.status === 'fulfilled') {
+          const errorData = await theNewsApiResponse.value.text();
+          console.error('TheNewsAPI failed with status:', theNewsApiResponse.value.status, 'Response:', errorData);
+        } else {
+          console.error('TheNewsAPI failed:', theNewsApiResponse.reason);
+        }
+      }
+      apiIndex++;
+    }
+
+    // Process GNews results
+    if (GNEWS_API_KEY && responses[apiIndex]) {
+      const gnewsResponse = responses[apiIndex];
+      if (gnewsResponse.status === 'fulfilled' && gnewsResponse.value.ok) {
+        const data = await gnewsResponse.value.json();
+        console.log('GNews response:', JSON.stringify(data).substring(0, 200));
+        if (data.articles && data.articles.length > 0) {
+          const filtered = data.articles.filter((article: any) => {
+            const text = (article.title + ' ' + (article.description || '')).toLowerCase();
+            const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+            const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+            const hasValidUrl = isValidNewsUrl(article.url);
+            return !hasCrypto && hasValidUrl;
+          });
+          
+          allArticles.push(...filtered.map((article: any) => ({
+            title: article.title,
+            category: categorizeTopic(article.title, article.description),
+            sentiment: analyzeSentiment(article.title, article.description),
+            time: formatTimeAgo(article.publishedAt),
+            source: article.source.name || 'GNews',
+            imageUrl: article.image,
+            url: article.url,
+            region: region
+          })));
+        }
+      } else {
+        if (gnewsResponse.status === 'fulfilled') {
+          const errorData = await gnewsResponse.value.text();
+          console.error('GNews failed with status:', gnewsResponse.value.status, 'Response:', errorData);
+        } else {
+          console.error('GNews failed:', gnewsResponse.reason);
+        }
       }
     }
 
-    // If no articles were fetched, use mock data as fallback
+    // If no articles were fetched, return empty array
     if (allArticles.length === 0) {
-      console.log('No articles from APIs, using mock data');
-      const mockArticles = getMockNews(region);
+      console.log('No articles fetched from any API');
       return new Response(
-        JSON.stringify({ articles: mockArticles }),
+        JSON.stringify({ 
+          articles: [],
+          message: 'No articles available at the moment. Please check API keys and try again.'
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -230,62 +300,4 @@ function isValidNewsUrl(url: string | null | undefined): boolean {
   } catch {
     return false;
   }
-}
-
-function getMockNews(region: string): NewsArticle[] {
-  const mockData: NewsArticle[] = [
-    {
-      title: "El oro alcanza máximos históricos en medio de tensiones geopolíticas",
-      category: "Materias Primas",
-      sentiment: "positive",
-      time: "Hace 15 min",
-      source: "Bloomberg",
-      imageUrl: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400",
-      url: "https://www.bloomberg.com",
-      region: "all"
-    },
-    {
-      title: "El petróleo alcanza $85 por barril ante tensiones en Medio Oriente",
-      category: "Energía",
-      sentiment: "positive",
-      time: "Hace 30 min",
-      source: "Reuters",
-      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
-      url: "https://www.reuters.com",
-      region: "all"
-    },
-    {
-      title: "Mercados asiáticos cierran en rojo por datos económicos de China",
-      category: "Acciones",
-      sentiment: "negative",
-      time: "Hace 1 hora",
-      source: "Financial Times",
-      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
-      url: "https://www.ft.com",
-      region: "asia"
-    },
-    {
-      title: "El EUR/USD se mantiene estable cerca de 1.09 antes de datos de inflación",
-      category: "Forex",
-      sentiment: "neutral",
-      time: "Hace 2 horas",
-      source: "Reuters",
-      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
-      url: "https://www.reuters.com",
-      region: "europe"
-    },
-    {
-      title: "Wall Street se prepara para reportes de ganancias tecnológicas",
-      category: "Acciones",
-      sentiment: "positive",
-      time: "Hace 3 horas",
-      source: "CNBC",
-      imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400",
-      url: "https://www.cnbc.com",
-      region: "us"
-    }
-  ];
-
-  if (region === 'all') return mockData;
-  return mockData.filter(item => item.region === region || item.region === 'all');
 }
