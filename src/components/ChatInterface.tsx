@@ -510,11 +510,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   return (
     <>
       <Card
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col h-full max-h-screen"
         onDrop={onDrop}
         onDragOver={onDragOver}
       >
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold">Asistente de Análisis</h2>
@@ -566,10 +566,10 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           </div>
         )}
 
-        <div className="flex-1 relative flex flex-col min-h-0">
+        <div className="flex-1 min-h-0 relative">
           <div 
             ref={scrollAreaRef}
-            className="flex-1 overflow-y-auto p-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+            className="absolute inset-0 overflow-y-auto p-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
           >
             <div className="space-y-4 pb-4">
               {currentMessages.map((message) => (
@@ -604,7 +604,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           )}
         </div>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <div className="flex gap-2">
             <Input
               value={input}
