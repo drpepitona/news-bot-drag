@@ -510,7 +510,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   return (
     <>
       <Card
-        className="flex-1 flex flex-col overflow-hidden"
+        className="flex-1 flex flex-col"
         onDrop={onDrop}
         onDragOver={onDragOver}
       >
