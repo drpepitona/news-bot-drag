@@ -44,7 +44,7 @@ export const NewsCard = ({ news, onDragStart, onAnalyzeNews }: NewsCardProps) =>
       draggable={!isMobile}
       onDragStart={(e) => onDragStart(e, news)}
       onClick={handleClick}
-      className="p-6 cursor-pointer active:cursor-grabbing hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
+      className="p-6 cursor-pointer hover:shadow-gold-glow transition-all duration-300 border-border bg-card hover:bg-black-elevated group overflow-hidden"
     >
       <div className="flex flex-col gap-4">
         {news.imageUrl && (
