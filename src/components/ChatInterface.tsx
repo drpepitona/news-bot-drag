@@ -49,6 +49,8 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const processedNewsCount = useRef(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentMessages = chats.find((chat) => chat.id === activeChat)?.messages || [];
 
@@ -89,6 +91,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       processedNewsCount.current = droppedNews.length;
     }
   }, [droppedNews, activeChat]);
+
+  // Auto-scroll cuando llegan nuevos mensajes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentMessages]);
 
   const loadChats = async () => {
     try {
@@ -544,7 +551,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           </div>
         )}
 
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {currentMessages.map((message) => (
               <div
@@ -558,10 +565,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
                       : "bg-muted"
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
