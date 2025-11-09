@@ -87,11 +87,11 @@ serve(async (req) => {
     }
     
     if (STOCKNEWS_API_KEY) {
-      // StockNews API
+      // StockNews API (trial plan limited to 3 items)
       apiCalls.push(
         fetch(`https://stocknewsapi.com/api/v1?${new URLSearchParams({
           tickers: '',
-          items: '50',
+          items: '3',
           token: STOCKNEWS_API_KEY
         }).toString()}`)
       );
