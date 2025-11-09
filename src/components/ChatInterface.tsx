@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { NewsItem } from "./NewsCard";
 import { supabase } from "@/integrations/supabase/client";
+import { analyzeNews } from "@/services/chatbotApi";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -54,13 +55,17 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   // Verificar autenticación
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
     };
-    
+
     checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user);
     });
 
@@ -87,14 +92,16 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
 
   const loadChats = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: chatsData, error: chatsError } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("chats")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (chatsError) throw chatsError;
 
@@ -103,23 +110,24 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         const chatsWithMessages = await Promise.all(
           chatsData.map(async (chat) => {
             const { data: messagesData } = await supabase
-              .from('messages')
-              .select('*')
-              .eq('chat_id', chat.id)
-              .order('created_at', { ascending: true });
+              .from("messages")
+              .select("*")
+              .eq("chat_id", chat.id)
+              .order("created_at", { ascending: true });
 
             return {
               id: chat.id,
               name: chat.name,
               createdAt: new Date(chat.created_at),
-              messages: messagesData?.map(msg => ({
-                id: msg.id,
-                type: msg.type as "user" | "ai" | "news",
-                content: msg.content,
-                news: msg.news_data ? msg.news_data as unknown as NewsItem : undefined
-              })) || []
+              messages:
+                messagesData?.map((msg) => ({
+                  id: msg.id,
+                  type: msg.type as "user" | "ai" | "news",
+                  content: msg.content,
+                  news: msg.news_data ? (msg.news_data as unknown as NewsItem) : undefined,
+                })) || [],
             };
-          })
+          }),
         );
 
         setChats(chatsWithMessages);
@@ -129,11 +137,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         await createNewChat();
       }
     } catch (error) {
-      console.error('Error loading chats:', error);
+      console.error("Error loading chats:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las conversaciones",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -145,19 +153,23 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       setShowAuthDialog(true);
       return;
     }
-    
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const newChatName = `Conversación ${chats.length + 1}`;
-      
+
       const { data: newChatData, error: chatError } = await supabase
-        .from('chats')
-        .insert([{
-          user_id: user.id,
-          name: newChatName
-        }])
+        .from("chats")
+        .insert([
+          {
+            user_id: user.id,
+            name: newChatName,
+          },
+        ])
         .select()
         .single();
 
@@ -165,12 +177,14 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
 
       // Crear mensaje de bienvenida
       const { data: welcomeMessage, error: messageError } = await supabase
-        .from('messages')
-        .insert([{
-          chat_id: newChatData.id,
-          type: 'ai',
-          content: '¡Hola! Soy tu asistente de análisis de mercado. ¿En qué puedo ayudarte?'
-        }])
+        .from("messages")
+        .insert([
+          {
+            chat_id: newChatData.id,
+            type: "ai",
+            content: "¡Hola! Soy tu asistente de análisis de mercado. ¿En qué puedo ayudarte?",
+          },
+        ])
         .select()
         .single();
 
@@ -180,11 +194,13 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         id: newChatData.id,
         name: newChatData.name,
         createdAt: new Date(newChatData.created_at),
-        messages: [{
-          id: welcomeMessage.id,
-          type: 'ai',
-          content: welcomeMessage.content
-        }]
+        messages: [
+          {
+            id: welcomeMessage.id,
+            type: "ai",
+            content: welcomeMessage.content,
+          },
+        ],
       };
 
       setChats([newChat, ...chats]);
@@ -193,14 +209,14 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
 
       toast({
         title: "Nueva conversación",
-        description: "Se creó una nueva conversación"
+        description: "Se creó una nueva conversación",
       });
     } catch (error) {
-      console.error('Error creating chat:', error);
+      console.error("Error creating chat:", error);
       toast({
         title: "Error",
         description: "No se pudo crear la conversación",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -210,36 +226,33 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       toast({
         title: "Información",
         description: "Debes tener al menos una conversación",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('chats')
-        .delete()
-        .eq('id', chatId);
+      const { error } = await supabase.from("chats").delete().eq("id", chatId);
 
       if (error) throw error;
 
       const updatedChats = chats.filter((chat) => chat.id !== chatId);
       setChats(updatedChats);
-      
+
       if (activeChat === chatId) {
         setActiveChat(updatedChats[0].id);
       }
 
       toast({
         title: "Conversación eliminada",
-        description: "La conversación se eliminó correctamente"
+        description: "La conversación se eliminó correctamente",
       });
     } catch (error) {
-      console.error('Error deleting chat:', error);
+      console.error("Error deleting chat:", error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la conversación",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -248,16 +261,18 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     if (!activeChat) return;
 
     try {
-      const newsContent = `📰 ${news.title}\n\n🏷️ Categoría: ${news.category}\n📅 ${news.time}\n📍 Fuente: ${news.source}${news.url ? `\n🔗 ${news.url}` : ''}`;
+      const newsContent = `📰 ${news.title}\n\n🏷️ Categoría: ${news.category}\n📅 ${news.time}\n📍 Fuente: ${news.source}${news.url ? `\n🔗 ${news.url}` : ""}`;
 
       const { data: newsMessageData, error: newsError } = await supabase
-        .from('messages')
-        .insert([{
-          chat_id: activeChat,
-          type: 'user',
-          content: newsContent,
-          news_data: news as any
-        }])
+        .from("messages")
+        .insert([
+          {
+            chat_id: activeChat,
+            type: "user",
+            content: newsContent,
+            news_data: news as any,
+          },
+        ])
         .select()
         .single();
 
@@ -267,50 +282,50 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         id: newsMessageData.id,
         type: "user",
         content: newsContent,
-        news: news
+        news: news,
       };
 
-      setChats(chats => chats.map(chat => 
-        chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, newsMessage] }
-          : chat
-      ));
+      setChats((chats) =>
+        chats.map((chat) => (chat.id === activeChat ? { ...chat, messages: [...chat.messages, newsMessage] } : chat)),
+      );
 
       // Obtener respuesta de la API
-      const chatHistory = chats.find(c => c.id === activeChat)?.messages || [];
+      const chatHistory = chats.find((c) => c.id === activeChat)?.messages || [];
       const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_URL}/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: newsContent,
-          history: chatHistory.map(msg => ({
-            role: msg.type === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          }))
-        })
+          history: chatHistory.map((msg) => ({
+            role: msg.type === "user" ? "user" : "assistant",
+            content: msg.content,
+          })),
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al obtener respuesta del chatbot');
+        throw new Error("Error al obtener respuesta del chatbot");
       }
 
       const data = await response.json();
-      const aiContent = data.response || 'No se pudo procesar la respuesta';
-      
+      const aiContent = data.response || "No se pudo procesar la respuesta";
+
       const { data: aiMessageData, error: aiError } = await supabase
-        .from('messages')
-        .insert([{
-          chat_id: activeChat,
-          type: 'ai',
-          content: aiContent
-        }])
+        .from("messages")
+        .insert([
+          {
+            chat_id: activeChat,
+            type: "ai",
+            content: aiContent,
+          },
+        ])
         .select()
         .single();
 
       if (aiError) {
-        console.error('Error saving AI message:', aiError);
+        console.error("Error saving AI message:", aiError);
         return;
       }
 
@@ -319,18 +334,16 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         type: "ai",
         content: aiContent,
       };
-      
-      setChats(chats => chats.map(chat => 
-        chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, aiMessage] }
-          : chat
-      ));
+
+      setChats((chats) =>
+        chats.map((chat) => (chat.id === activeChat ? { ...chat, messages: [...chat.messages, aiMessage] } : chat)),
+      );
     } catch (error) {
-      console.error('Error sending news message:', error);
+      console.error("Error sending news message:", error);
       toast({
         title: "Error",
         description: "No se pudo enviar la noticia",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -340,18 +353,20 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       setShowAuthDialog(true);
       return;
     }
-    
+
     if (!input.trim() || !activeChat) return;
-    
+
     try {
       // Guardar mensaje del usuario
       const { data: userMessageData, error: userError } = await supabase
-        .from('messages')
-        .insert([{
-          chat_id: activeChat,
-          type: 'user',
-          content: input
-        }])
+        .from("messages")
+        .insert([
+          {
+            chat_id: activeChat,
+            type: "user",
+            content: input,
+          },
+        ])
         .select()
         .single();
 
@@ -362,49 +377,49 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         type: "user",
         content: input,
       };
-      
-      setChats(chats.map(chat => 
-        chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, userMessage] }
-          : chat
-      ));
+
+      setChats(
+        chats.map((chat) => (chat.id === activeChat ? { ...chat, messages: [...chat.messages, userMessage] } : chat)),
+      );
       setInput("");
-      
+
       // Obtener respuesta de la API
-      const chatHistory = chats.find(c => c.id === activeChat)?.messages || [];
+      const chatHistory = chats.find((c) => c.id === activeChat)?.messages || [];
       const response = await fetch(`${import.meta.env.VITE_CHATBOT_API_URL}/chat`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: input,
-          history: chatHistory.map(msg => ({
-            role: msg.type === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          }))
-        })
+          history: chatHistory.map((msg) => ({
+            role: msg.type === "user" ? "user" : "assistant",
+            content: msg.content,
+          })),
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al obtener respuesta del chatbot');
+        throw new Error("Error al obtener respuesta del chatbot");
       }
 
       const data = await response.json();
-      const aiContent = data.response || 'No se pudo procesar la respuesta';
-      
+      const aiContent = data.response || "No se pudo procesar la respuesta";
+
       const { data: aiMessageData, error: aiError } = await supabase
-        .from('messages')
-        .insert([{
-          chat_id: activeChat,
-          type: 'ai',
-          content: aiContent
-        }])
+        .from("messages")
+        .insert([
+          {
+            chat_id: activeChat,
+            type: "ai",
+            content: aiContent,
+          },
+        ])
         .select()
         .single();
 
       if (aiError) {
-        console.error('Error saving AI message:', aiError);
+        console.error("Error saving AI message:", aiError);
         return;
       }
 
@@ -413,18 +428,16 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         type: "ai",
         content: aiContent,
       };
-      
-      setChats(chats => chats.map(chat => 
-        chat.id === activeChat 
-          ? { ...chat, messages: [...chat.messages, aiMessage] }
-          : chat
-      ));
+
+      setChats((chats) =>
+        chats.map((chat) => (chat.id === activeChat ? { ...chat, messages: [...chat.messages, aiMessage] } : chat)),
+      );
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       toast({
         title: "Error",
         description: "No se pudo enviar el mensaje",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -460,9 +473,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
                 <div
                   key={chat.id}
                   className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                    activeChat === chat.id
-                      ? "bg-gold-dark/20 border border-gold-medium/30"
-                      : "hover:bg-black-elevated"
+                    activeChat === chat.id ? "bg-gold-dark/20 border border-gold-medium/30" : "hover:bg-black-elevated"
                   }`}
                   onClick={() => {
                     setActiveChat(chat.id);
@@ -501,7 +512,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       >
         {/* Gradient glow effect */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-gold-radial pointer-events-none" />
-        
+
         {/* Header */}
         <div className="p-6 border-b border-border relative z-10">
           <div className="flex items-center gap-3">
@@ -524,7 +535,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-foreground">
-                {chats.find(c => c.id === activeChat)?.name || "AI Analyst"}
+                {chats.find((c) => c.id === activeChat)?.name || "AI Analyst"}
               </h2>
               <p className="text-xs text-muted-foreground">Análisis en tiempo real</p>
             </div>
@@ -535,10 +546,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
         <ScrollArea className="flex-1 p-6 relative z-10">
           <div className="space-y-4">
             {currentMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
-              >
+              <div key={message.id} className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.type === "user"
@@ -546,13 +554,13 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
                       : "bg-black-elevated text-foreground border border-border"
                   }`}
                 >
-                  <div 
+                  <div
                     className="text-sm whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{
                       __html: message.content.replace(
                         /(https?:\/\/[^\s]+)/g,
-                        '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-80">$1</a>'
-                      )
+                        '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-80">$1</a>',
+                      ),
                     }}
                   />
                   {message.news && (
@@ -576,11 +584,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
               placeholder="Escribe un mensaje o arrastra una noticia..."
               className="flex-1 bg-black-elevated border-border focus:border-gold-light focus:shadow-gold-glow"
             />
-            <Button
-              onClick={handleSend}
-              size="icon"
-              className="bg-gradient-gold hover:opacity-90 shadow-gold-glow"
-            >
+            <Button onClick={handleSend} size="icon" className="bg-gradient-gold hover:opacity-90 shadow-gold-glow">
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -597,9 +601,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={onAuthRequired}>
-              Ir a Iniciar Sesión
-            </AlertDialogAction>
+            <AlertDialogAction onClick={onAuthRequired}>Ir a Iniciar Sesión</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
