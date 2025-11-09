@@ -476,3 +476,129 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     });
   }
 };
+
+  if (loading) {
+    return (
+      <Card className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">Cargando...</p>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card
+        className="flex-1 flex flex-col overflow-hidden"
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">Asistente de Análisis</h2>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowChatList(!showChatList)}
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Conversaciones
+            </Button>
+            <Button variant="outline" size="sm" onClick={createNewChat}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nueva
+            </Button>
+          </div>
+        </div>
+
+        {showChatList && (
+          <div className="p-4 border-b bg-muted/50">
+            <ScrollArea className="h-32">
+              <div className="space-y-2">
+                {chats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-accent ${activeChat === chat.id ? "bg-accent" : ""}`}
+                    onClick={() => {
+                      setActiveChat(chat.id);
+                      setShowChatList(false);
+                    }}
+                  >
+                    <span className="text-sm">{chat.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {currentMessages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 ${
+                    message.type === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <div className="p-4 border-t">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Escribe tu mensaje o arrastra una noticia..."
+              className="flex-1"
+            />
+            <Button onClick={handleSend} disabled={!input.trim()}>
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <AlertDialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Autenticación requerida</AlertDialogTitle>
+            <AlertDialogDescription>
+              Debes iniciar sesión para usar el chat. ¿Deseas ir a la página de inicio de sesión?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowAuthDialog(false)}>
+              Cancelar
+            </Button>
+            <AlertDialogAction onClick={onAuthRequired}>
+              Iniciar sesión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+};
