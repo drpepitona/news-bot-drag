@@ -9,12 +9,7 @@ import { NewsItem } from "@/components/NewsCard";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,11 +26,11 @@ const Index = () => {
   // Verificar autenticación (sin redireccionar automáticamente)
   useEffect(() => {
     // Configurar listener de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+    });
 
     // Verificar sesión actual
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -99,19 +94,16 @@ const Index = () => {
         {/* Panel del Chat - Redimensionable */}
         {(isChatVisible || isAnimating) && (
           <>
-            <ResizablePanel 
-              defaultSize={30} 
-              minSize={20} 
-              maxSize={60}
-              className="transition-all duration-300 ease-out"
-            >
-              <div className={`h-full border-r border-gold-dark/20 ${
-                isAnimating && !isChatVisible 
-                  ? "animate-slide-out-left" 
-                  : isChatVisible 
-                    ? "animate-slide-in-left" 
-                    : ""
-              }`}>
+            <ResizablePanel defaultSize={30} minSize={20} maxSize={60} className="transition-all duration-300 ease-out">
+              <div
+                className={`h-full border-r border-gold-dark/20 ${
+                  isAnimating && !isChatVisible
+                    ? "animate-slide-out-left"
+                    : isChatVisible
+                      ? "animate-slide-in-left"
+                      : ""
+                }`}
+              >
                 <ChatInterface
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
@@ -138,16 +130,8 @@ const Index = () => {
                 >
                   <MessageSquare className="h-5 w-5" />
                 </Button>
-                <NewsSearchBar 
-                  value={searchQuery} 
-                  onChange={setSearchQuery} 
-                />
-                <Button
-                  onClick={handleAuthAction}
-                  variant="outline"
-                  className="ml-auto"
-                  size="sm"
-                >
+                <NewsSearchBar value={searchQuery} onChange={setSearchQuery} />
+                <Button onClick={handleAuthAction} variant="outline" className="ml-auto" size="sm">
                   <UserPlus className="h-4 w-4 mr-2" />
                   {session ? "Salir" : "Registrarte"}
                 </Button>
@@ -156,7 +140,7 @@ const Index = () => {
 
             {/* Panel de noticias - área principal */}
             <div className="flex-1 overflow-hidden">
-              <NewsPanel 
+              <NewsPanel
                 onDragStart={handleDragStart}
                 searchQuery={searchQuery}
                 region={region}
