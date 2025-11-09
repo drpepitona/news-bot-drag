@@ -107,17 +107,21 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, [currentMessages]);
 
-  // Auto-scroll cuando llegan nuevos mensajes (solo si el usuario estaba al final)
+  // Auto-scroll solo para mensajes nuevos y cuando el usuario está al final
   useEffect(() => {
     const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
-    if (!scrollContainer) return;
+    if (!scrollContainer || currentMessages.length === 0) return;
     
-    const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
+    // Solo hacer auto-scroll si estamos cerca del final o es el primer mensaje
+    const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 150;
+    const isFirstMessage = currentMessages.length === 1;
     
-    if (isNearBottom || currentMessages.length === 1) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isNearBottom || isFirstMessage) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     }
-  }, [currentMessages]);
+  }, [currentMessages.length]); // Solo cuando cambia la cantidad de mensajes
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
