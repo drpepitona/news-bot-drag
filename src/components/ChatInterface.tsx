@@ -7,6 +7,15 @@ import { Send, Sparkles, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { NewsItem } from "./NewsCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   id: string;
@@ -26,23 +35,46 @@ interface ChatInterfaceProps {
   onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   droppedNews: NewsItem[];
+  onAuthRequired: () => void;
 }
 
-export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterfaceProps) => {
+export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired }: ChatInterfaceProps) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [showChatList, setShowChatList] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { toast } = useToast();
   const processedNewsCount = useRef(0);
 
   const currentMessages = chats.find((chat) => chat.id === activeChat)?.messages || [];
 
+  // Verificar autenticación
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Cargar chats desde la base de datos
   useEffect(() => {
-    loadChats();
-  }, []);
+    if (isAuthenticated) {
+      loadChats();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   // Procesar noticias arrastradas
   useEffect(() => {
@@ -109,6 +141,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
   };
 
   const createNewChat = async () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -281,6 +318,11 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
   };
 
   const handleSend = async () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+      return;
+    }
+    
     if (!input.trim() || !activeChat) return;
     
     try {
@@ -430,7 +472,13 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => setShowChatList(!showChatList)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setShowAuthDialog(true);
+                  return;
+                }
+                setShowChatList(!showChatList);
+              }}
               className="h-10 w-10"
             >
               <MessageSquare className="h-5 w-5" />
@@ -502,6 +550,23 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews }: ChatInterface
           </div>
         </div>
       </Card>
+
+      {/* Alert Dialog para solicitar autenticación */}
+      <AlertDialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Inicia sesión para continuar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Necesitas iniciar sesión para poder usar el chat, ver el historial de conversaciones y enviar mensajes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={onAuthRequired}>
+              Ir a Iniciar Sesión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

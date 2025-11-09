@@ -116,6 +116,7 @@ const Index = () => {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   droppedNews={droppedNews}
+                  onAuthRequired={() => navigate("/auth")}
                 />
               </div>
             </ResizablePanel>
