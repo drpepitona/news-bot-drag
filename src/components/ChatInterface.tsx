@@ -522,23 +522,29 @@ export const ChatInterface = ({ onDragOver, draggedNews, onDrop, onAuthRequired 
         onDrop={handleDrop}
         onDragOver={onDragOver}
       >
-        <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Asistente de Análisis</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
+            <h2 className="text-base sm:text-lg font-semibold truncate">Asistente de Análisis</h2>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowChatList(!showChatList)}
+              className="text-xs sm:text-sm"
             >
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Conversaciones
+              <MessageSquare className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Conversaciones</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={createNewChat}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={createNewChat}
+              className="text-xs sm:text-sm"
+            >
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nueva</span>
             </Button>
           </div>
         </div>
