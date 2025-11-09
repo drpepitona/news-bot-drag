@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles, Plus, MessageSquare, Trash2 } from "lucide-react";
+import { Send, Sparkles, Plus, MessageSquare, Trash2, ArrowDown } from "lucide-react";
 import { NewsItem } from "./NewsCard";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeNews } from "@/services/chatbotApi";
@@ -47,6 +47,7 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { toast } = useToast();
   const processedNewsCount = useRef(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -92,6 +93,20 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
     }
   }, [droppedNews, activeChat]);
 
+  // Detectar scroll para mostrar/ocultar botón
+  useEffect(() => {
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const isNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 100;
+      setShowScrollButton(!isNearBottom && currentMessages.length > 3);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [currentMessages]);
+
   // Auto-scroll cuando llegan nuevos mensajes (solo si el usuario estaba al final)
   useEffect(() => {
     const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
@@ -103,6 +118,10 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [currentMessages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const loadChats = async () => {
     try {
@@ -558,9 +577,9 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
           </div>
         )}
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 relative overflow-hidden">
           <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               {currentMessages.map((message) => (
                 <div
                   key={message.id}
@@ -580,6 +599,17 @@ export const ChatInterface = ({ onDrop, onDragOver, droppedNews, onAuthRequired 
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
+          
+          {showScrollButton && (
+            <Button
+              onClick={scrollToBottom}
+              size="icon"
+              className="absolute bottom-4 right-8 rounded-full shadow-lg z-10 animate-in fade-in slide-in-from-bottom-2"
+              variant="default"
+            >
+              <ArrowDown className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         <div className="p-4 border-t">
