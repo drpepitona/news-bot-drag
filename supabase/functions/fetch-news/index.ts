@@ -30,8 +30,9 @@ serve(async (req) => {
     const THENEWSAPI_KEY = Deno.env.get('THENEWSAPI_KEY');
     const GNEWS_API_KEY = Deno.env.get('GNEWS_API_KEY');
     const STOCKNEWS_API_KEY = Deno.env.get('STOCKNEWS_API_KEY');
+    const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY');
     
-    if (!NEWS_API_KEY && !THENEWSAPI_KEY && !GNEWS_API_KEY && !STOCKNEWS_API_KEY) {
+    if (!NEWS_API_KEY && !THENEWSAPI_KEY && !GNEWS_API_KEY && !STOCKNEWS_API_KEY && !FINNHUB_API_KEY) {
       throw new Error('No API keys configured');
     }
 
@@ -93,6 +94,16 @@ serve(async (req) => {
           tickers: '',
           items: '3',
           token: STOCKNEWS_API_KEY
+        }).toString()}`)
+      );
+    }
+    
+    if (FINNHUB_API_KEY) {
+      // Finnhub API - free market news
+      apiCalls.push(
+        fetch(`https://finnhub.io/api/v1/news?${new URLSearchParams({
+          category: 'general',
+          token: FINNHUB_API_KEY
         }).toString()}`)
       );
     }
@@ -245,6 +256,43 @@ serve(async (req) => {
           console.error('StockNews failed with status:', stockNewsResponse.value.status, 'Response:', errorData);
         } else {
           console.error('StockNews failed:', stockNewsResponse.reason);
+        }
+      }
+      apiIndex++;
+    }
+
+    // Process Finnhub results
+    if (FINNHUB_API_KEY && responses[apiIndex]) {
+      const finnhubResponse = responses[apiIndex];
+      if (finnhubResponse.status === 'fulfilled' && finnhubResponse.value.ok) {
+        const data = await finnhubResponse.value.json();
+        console.log('Finnhub response:', JSON.stringify(data).substring(0, 200));
+        if (Array.isArray(data) && data.length > 0) {
+          const filtered = data.filter((article: any) => {
+            const text = (article.headline + ' ' + (article.summary || '')).toLowerCase();
+            const cryptoKeywords = ['bitcoin', 'crypto', 'blockchain', 'ethereum', 'btc', 'eth', 'cryptocurrency'];
+            const hasCrypto = cryptoKeywords.some(keyword => text.includes(keyword));
+            const hasValidUrl = isValidNewsUrl(article.url);
+            return !hasCrypto && hasValidUrl;
+          });
+          
+          allArticles.push(...filtered.map((article: any) => ({
+            title: article.headline,
+            category: categorizeTopic(article.headline, article.summary || ''),
+            sentiment: (article.sentiment > 0 ? 'positive' : article.sentiment < 0 ? 'negative' : 'neutral') as "positive" | "negative" | "neutral",
+            time: formatTimeAgo(new Date(article.datetime * 1000).toISOString()),
+            source: article.source || 'Finnhub',
+            imageUrl: article.image || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop',
+            url: article.url,
+            region: region
+          })));
+        }
+      } else {
+        if (finnhubResponse.status === 'fulfilled') {
+          const errorData = await finnhubResponse.value.text();
+          console.error('Finnhub failed with status:', finnhubResponse.value.status, 'Response:', errorData);
+        } else {
+          console.error('Finnhub failed:', finnhubResponse.reason);
         }
       }
     }
